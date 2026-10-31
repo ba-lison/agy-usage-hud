@@ -1,0 +1,92 @@
+{
+  "checkedAt": "2026-10-31T01:12:06.181Z",
+  "combinations": 16,
+  "layouts": [
+    {
+      "theme": "dark",
+      "width": 320,
+      "scroll": 320,
+      "hud": {
+        "width": 290,
+        "scroll": 290
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "scroll": 390,
+      "hud": {
+        "width": 348,
+        "scroll": 348
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 768,
+      "scroll": 768,
+      "hud": {
+        "width": 558,
+        "scroll": 558
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "scroll": 1440,
+      "hud": {
+        "width": 408,
+        "scroll": 408
+      }
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "scroll": 320,
+      "hud": {
+        "width": 290,
+        "scroll": 290
+      }
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "scroll": 390,
+      "hud": {
+        "width": 348,
+        "scroll": 348
+      }
+    },
+    {
+      "theme": "light",
+      "width": 768,
+      "scroll": 768,
+      "hud": {
+        "width": 558,
+        "scroll": 558
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "scroll": 1440,
+      "hud": {
+        "width": 408,
+        "scroll": 408
+      }
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "checks": [
+    "Gemini colorido only",
+    "No mouth, eyebrows, feet or eye highlights in all 16 combinations",
+    "Identical original image in both options",
+    "New circle and rectangle eye geometries",
+    "HUD synchronization",
+    "Keyboard and focus",
+    "Themes, reduced motion and offline"
+  ],
+  "limits": [
+    "Visual proposal only; no live session integration"
+  ]
+}

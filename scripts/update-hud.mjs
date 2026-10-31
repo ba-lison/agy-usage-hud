@@ -326,15 +326,13 @@ async function readStdinJson() {
   }
 }
 
-async function main() {
-  const payload = await readStdinJson()
-  const artifactDir = payload.artifactDirectoryPath || process.argv[2]
+export async function runUpdate(payload = {}, explicitArtifactDir = null) {
+  const artifactDir = payload.artifactDirectoryPath || explicitArtifactDir
   const transcriptPath =
     payload.transcriptPath ||
     (artifactDir ? path.join(artifactDir, '.system_generated', 'logs', 'transcript.jsonl') : null)
 
   if (!artifactDir) {
-    process.stdout.write('{}\n')
     return
   }
 
@@ -485,6 +483,18 @@ async function main() {
   process.stdout.write('{}\n')
 }
 
-main().catch(() => {
+export default runUpdate
+
+async function main() {
+  const payload = await readStdinJson()
+  const artifactDir = payload.artifactDirectoryPath || process.argv[2]
+  await runUpdate(payload, artifactDir)
   process.stdout.write('{}\n')
-})
+}
+
+const isDirectCall = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'))
+if (isDirectCall) {
+  main().catch(() => {
+    process.stdout.write('{}\n')
+  })
+}

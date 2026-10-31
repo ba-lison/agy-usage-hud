@@ -1,0 +1,142 @@
+{
+  "checkedAt": "2026-10-31T01:24:00.939Z",
+  "reducer": "passed",
+  "actionVersionCombinations": 16,
+  "layouts": [
+    {
+      "theme": "dark",
+      "width": 320,
+      "scroll": 320,
+      "hud": {
+        "width": 290,
+        "scroll": 290,
+        "height": 828,
+        "content": 828
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "scroll": 390,
+      "hud": {
+        "width": 348,
+        "scroll": 348,
+        "height": 828,
+        "content": 828
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 768,
+      "scroll": 768,
+      "hud": {
+        "width": 558,
+        "scroll": 558,
+        "height": 803,
+        "content": 803
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "scroll": 1024,
+      "hud": {
+        "width": 388,
+        "scroll": 388,
+        "height": 808,
+        "content": 808
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "scroll": 1440,
+      "hud": {
+        "width": 408,
+        "scroll": 408,
+        "height": 808,
+        "content": 808
+      }
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "scroll": 320,
+      "hud": {
+        "width": 290,
+        "scroll": 290,
+        "height": 828,
+        "content": 828
+      }
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "scroll": 390,
+      "hud": {
+        "width": 348,
+        "scroll": 348,
+        "height": 828,
+        "content": 828
+      }
+    },
+    {
+      "theme": "light",
+      "width": 768,
+      "scroll": 768,
+      "hud": {
+        "width": 558,
+        "scroll": 558,
+        "height": 803,
+        "content": 803
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "scroll": 1024,
+      "hud": {
+        "width": 388,
+        "scroll": 388,
+        "height": 808,
+        "content": 808
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "scroll": 1440,
+      "hud": {
+        "width": 408,
+        "scroll": 408,
+        "height": 808,
+        "content": 808
+      }
+    }
+  ],
+  "pixelInfo": {
+    "width": 32,
+    "height": 32,
+    "alpha": [
+      0,
+      255
+    ]
+  },
+  "errors": [],
+  "externalRequests": [],
+  "checks": [
+    "Official hook-shaped events",
+    "Concurrent tools, duplicates and out-of-order events",
+    "Conversation isolation and invalid payloads",
+    "Explicit errors and neutral Stop",
+    "No retained arguments or error details",
+    "V2 favorite marker",
+    "Tool return and keyboard interaction",
+    "Two versions, two eye styles, 32x32 sprite",
+    "Theme, offline and reduced motion"
+  ],
+  "limits": [
+    "Examples only; hook collector and live event transport not installed",
+    "No Antigravity webview or physical-device test"
+  ]
+}

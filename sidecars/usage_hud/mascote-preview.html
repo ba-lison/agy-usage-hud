@@ -1,0 +1,1208 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gemi · Mascote Oficial do AGY - UsageHUD</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400..600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --surface: #ffffff;
+        --surface-low: #f8f9fc;
+        --surface-high: #eff2f7;
+        --ink: #121317;
+        --muted: #45474d;
+        --faint: #6a6a71;
+        --outline: rgba(33, 34, 38, 0.12);
+        --outline-soft: rgba(33, 34, 38, 0.06);
+        --blue: #3279f9;
+        --blue-soft: #edf3ff;
+        --purple: #7c4dff;
+        --purple-soft: #f3edff;
+        --track: #e6eaf0;
+        --hover: #f0f1f5;
+        --canvas: #f8f9fc;
+        --green: #34a853;
+        --amber: #fbbc04;
+        --red: #ea4335;
+        --radius: 14px;
+        --radius-sm: 8px;
+        --font: "Google Sans Flex", "Google Sans", system-ui, sans-serif;
+        --font-mono: "JetBrains Mono", monospace;
+        --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+        --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+        --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+        --surface: #18191d;
+        --surface-low: #212226;
+        --surface-high: #2f3034;
+        --ink: #f8f9fc;
+        --muted: #cdd4dc;
+        --faint: #a6a9b0;
+        --outline: rgba(230, 234, 240, 0.14);
+        --outline-soft: rgba(230, 234, 240, 0.08);
+        --blue: #8bb4ff;
+        --blue-soft: #253147;
+        --purple: #b388ff;
+        --purple-soft: #2e2646;
+        --track: #36383f;
+        --hover: #2f3034;
+        --canvas: #121317;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: var(--font);
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 28px;
+        border-bottom: 1px solid var(--outline);
+        background: var(--surface);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand-title {
+        font-size: 17px;
+        font-weight: 550;
+        letter-spacing: -0.01em;
+        margin: 0;
+      }
+
+      .brand-badge {
+        font-size: 11px;
+        font-weight: 500;
+        padding: 3px 8px;
+        border-radius: 99px;
+        background: var(--blue-soft);
+        color: var(--blue);
+        border: 1px solid var(--outline);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .theme-toggle, .btn {
+        background: var(--surface-low);
+        border: 1px solid var(--outline);
+        color: var(--ink);
+        padding: 7px 14px;
+        border-radius: var(--radius-sm);
+        font-family: var(--font);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+      }
+
+      .theme-toggle:hover, .btn:hover {
+        background: var(--hover);
+        border-color: var(--faint);
+      }
+
+      .theme-toggle:active, .btn:active {
+        transform: scale(0.97);
+      }
+
+      main {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 32px 24px;
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 28px;
+      }
+
+      @media (max-width: 960px) {
+        main {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Stage Card */
+      .stage-card {
+        background: var(--surface);
+        border: 1px solid var(--outline);
+        border-radius: var(--radius);
+        padding: 32px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .stage-header {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+
+      .state-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .state-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        box-shadow: 0 0 10px var(--blue);
+        transition: background 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .state-dot.pensando { background: #ab47bc; box-shadow: 0 0 10px #ab47bc; }
+      .state-dot.lendo { background: #26c6da; box-shadow: 0 0 10px #26c6da; }
+      .state-dot.editando { background: #ff7043; box-shadow: 0 0 10px #ff7043; }
+      .state-dot.terminal { background: #42a5f5; box-shadow: 0 0 10px #42a5f5; }
+      .state-dot.orquestrando { background: #ffd54f; box-shadow: 0 0 12px #ffd54f; }
+      .state-dot.concluido { background: #66bb6a; box-shadow: 0 0 12px #66bb6a; }
+      .state-dot.erro { background: #ef5350; box-shadow: 0 0 10px #ef5350; }
+
+      .stage-viewport {
+        width: 100%;
+        height: 380px;
+        background: radial-gradient(circle at center, var(--surface-low) 0%, transparent 75%);
+        border: 1px dashed var(--outline);
+        border-radius: var(--radius);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+      }
+
+      /* ============================================================
+         GEMI MASCOT SVG & ANIMATIONS
+         ============================================================ */
+      .gemi-mascot-wrapper {
+        position: relative;
+        width: 220px;
+        height: 220px;
+        display: grid;
+        place-items: center;
+      }
+
+      .gemi-svg {
+        width: 160px;
+        height: 160px;
+        overflow: visible;
+        transition: transform 0.4s var(--ease-bounce);
+      }
+
+      /* Float Animation */
+      .gemi-floating {
+        animation: gemiFloat 3.2s var(--ease-in-out) infinite alternate;
+        transform-origin: center center;
+      }
+
+      @keyframes gemiFloat {
+        0% { transform: translateY(-6px) rotate(-1deg); }
+        50% { transform: translateY(0px) rotate(0.5deg); }
+        100% { transform: translateY(6px) rotate(1.5deg); }
+      }
+
+      /* Core Star */
+      .gemi-body {
+        transition: fill 0.4s ease, filter 0.4s ease;
+        transform-origin: 60px 60px;
+      }
+
+      /* Glow & Ambient */
+      .gemi-aura {
+        position: absolute;
+        width: 190px;
+        height: 190px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(124, 77, 255, 0.22) 0%, rgba(66, 133, 244, 0.12) 45%, transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+        animation: gemiPulse 2.8s var(--ease-in-out) infinite alternate;
+      }
+
+      @keyframes gemiPulse {
+        0% { transform: scale(0.92); opacity: 0.6; }
+        100% { transform: scale(1.1); opacity: 0.95; }
+      }
+
+      /* Natural Eye Blinking */
+      .gemi-eyes {
+        transform-origin: 60px 58px;
+        transition: transform 0.25s var(--ease-out);
+      }
+
+      .gemi-eye {
+        transition: transform 0.25s var(--ease-out);
+      }
+
+      .gemi-eyelids {
+        animation: naturalBlink 4s infinite;
+        transform-origin: 60px 58px;
+      }
+
+      @keyframes naturalBlink {
+        0%, 94%, 100% { transform: scaleY(1); }
+        96% { transform: scaleY(0.08); }
+      }
+
+      /* Mouth */
+      .gemi-mouth {
+        transition: d 0.2s var(--ease-out), transform 0.2s var(--ease-out);
+      }
+
+      /* Accessories / States */
+      .accessory {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s var(--ease-out), transform 0.3s var(--ease-out);
+      }
+
+      /* Coordenador Crown */
+      .crown-accessory {
+        position: absolute;
+        top: 2px;
+        left: 50%;
+        transform: translateX(-50%) translateY(8px) scale(0.7);
+        opacity: 0;
+        transition: all 0.35s var(--ease-bounce);
+        z-index: 5;
+      }
+
+      .state-orquestrando .crown-accessory {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-10px) scale(1);
+        animation: crownHover 2.4s var(--ease-in-out) infinite alternate;
+      }
+
+      @keyframes crownHover {
+        0% { transform: translateX(-50%) translateY(-10px) rotate(-2deg); }
+        100% { transform: translateX(-50%) translateY(-14px) rotate(2deg); }
+      }
+
+      /* Thinking Orbit */
+      .thinking-orbit {
+        position: absolute;
+        width: 170px;
+        height: 170px;
+        border-radius: 50%;
+        border: 1.5px dashed rgba(179, 136, 255, 0.45);
+        opacity: 0;
+        transform: scale(0.85) rotate(0deg);
+        transition: opacity 0.3s ease, transform 0.4s var(--ease-out);
+        pointer-events: none;
+      }
+
+      .thinking-sparkle {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: #e040fb;
+        border-radius: 50%;
+        box-shadow: 0 0 10px #e040fb;
+      }
+      .thinking-sparkle.s1 { top: -5px; left: 50%; transform: translateX(-50%); }
+      .thinking-sparkle.s2 { bottom: 20px; right: 10px; background: #40c4ff; box-shadow: 0 0 10px #40c4ff; }
+      .thinking-sparkle.s3 { bottom: 20px; left: 10px; background: #ffd740; box-shadow: 0 0 10px #ffd740; }
+
+      .state-pensando .thinking-orbit {
+        opacity: 1;
+        transform: scale(1) rotate(360deg);
+        animation: spinOrbit 4s linear infinite;
+      }
+
+      @keyframes spinOrbit {
+        to { transform: scale(1) rotate(360deg); }
+      }
+
+      /* Code / Reading Document */
+      .doc-accessory {
+        position: absolute;
+        right: 10px;
+        bottom: 25px;
+        background: var(--surface);
+        border: 1px solid var(--outline);
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+        opacity: 0;
+        transform: translateY(10px) scale(0.85);
+        transition: all 0.3s var(--ease-bounce);
+        z-index: 4;
+      }
+
+      .state-lendo .doc-accessory, .state-editando .doc-accessory {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+
+      .doc-scanline {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--blue);
+        box-shadow: 0 0 8px var(--blue);
+        animation: scanMove 1.4s ease-in-out infinite alternate;
+      }
+
+      @keyframes scanMove {
+        0% { top: 4px; }
+        100% { top: 90%; }
+      }
+
+      /* Terminal Badge */
+      .terminal-accessory {
+        position: absolute;
+        left: 8px;
+        bottom: 22px;
+        background: #151518;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #76ff03;
+        border-radius: 6px;
+        padding: 5px 8px;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        opacity: 0;
+        transform: translateY(8px) scale(0.85);
+        transition: all 0.3s var(--ease-bounce);
+        z-index: 4;
+      }
+
+      .state-terminal .terminal-accessory {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+
+      .cursor-blink {
+        display: inline-block;
+        width: 6px;
+        height: 11px;
+        background: #76ff03;
+        animation: blinkCursor 0.8s infinite;
+      }
+
+      @keyframes blinkCursor {
+        0%, 49% { opacity: 1; }
+        50%, 100% { opacity: 0; }
+      }
+
+      /* Celebration Confetti */
+      .confetti-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0;
+      }
+
+      .state-concluido .confetti-layer {
+        opacity: 1;
+      }
+
+      .confetti-particle {
+        position: absolute;
+        width: 7px;
+        height: 7px;
+        border-radius: 2px;
+      }
+
+      .state-concluido .confetti-particle.c1 { top: 20%; left: 22%; background: #4285f4; animation: popParticle 0.8s var(--ease-bounce) infinite alternate; }
+      .state-concluido .confetti-particle.c2 { top: 15%; right: 25%; background: #ea4335; animation: popParticle 0.9s 0.1s var(--ease-bounce) infinite alternate; }
+      .state-concluido .confetti-particle.c3 { bottom: 25%; left: 18%; background: #fbbc04; animation: popParticle 1s 0.2s var(--ease-bounce) infinite alternate; }
+      .state-concluido .confetti-particle.c4 { bottom: 22%; right: 20%; background: #34a853; animation: popParticle 0.85s 0.15s var(--ease-bounce) infinite alternate; }
+      .state-concluido .confetti-particle.c5 { top: 40%; right: 12%; background: #ab47bc; animation: popParticle 0.75s 0.25s var(--ease-bounce) infinite alternate; }
+
+      @keyframes popParticle {
+        0% { transform: scale(0.4) rotate(0deg); opacity: 0.3; }
+        100% { transform: scale(1.25) rotate(45deg); opacity: 1; }
+      }
+
+      /* Subagents Pod */
+      .subagents-pod {
+        position: absolute;
+        bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        opacity: 0;
+        transform: translateY(12px);
+        transition: all 0.4s var(--ease-bounce);
+      }
+
+      .state-orquestrando .subagents-pod {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .mini-gemi-card {
+        background: var(--surface);
+        border: 1px solid var(--outline);
+        border-radius: var(--radius-sm);
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+        animation: miniFloat 2.6s var(--ease-in-out) infinite alternate;
+      }
+
+      .mini-gemi-card:nth-child(2) { animation-delay: 0.3s; }
+      .mini-gemi-card:nth-child(3) { animation-delay: 0.6s; }
+
+      @keyframes miniFloat {
+        0% { transform: translateY(-3px); }
+        100% { transform: translateY(3px); }
+      }
+
+      .mini-gemi-avatar {
+        width: 32px;
+        height: 32px;
+      }
+
+      .mini-gemi-info {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .mini-gemi-role {
+        font-size: 11px;
+        font-weight: 550;
+      }
+
+      .mini-gemi-task {
+        font-size: 10px;
+        color: var(--faint);
+        font-family: var(--font-mono);
+      }
+
+      /* Specific Pose States */
+      /* PENSANDO */
+      .state-pensando .gemi-eyes {
+        transform: translateY(-3px) translateX(2px);
+      }
+      .state-pensando .gemi-body {
+        transform: rotate(3deg);
+      }
+
+      /* LENDO */
+      .state-lendo .gemi-eyes {
+        animation: eyeScan 1.6s ease-in-out infinite alternate;
+      }
+      @keyframes eyeScan {
+        0% { transform: translateX(-4px) translateY(1px); }
+        100% { transform: translateX(3px) translateY(1px); }
+      }
+
+      /* EDITANDO */
+      .state-editando .gemi-floating {
+        animation: gemiType 0.35s ease-in-out infinite alternate;
+      }
+      @keyframes gemiType {
+        0% { transform: translateY(-2px) scale(0.99); }
+        100% { transform: translateY(2px) scale(1.02); }
+      }
+
+      /* CONCLUÍDO */
+      .state-concluido .gemi-floating {
+        animation: gemiJump 0.75s var(--ease-bounce) infinite alternate;
+      }
+      @keyframes gemiJump {
+        0% { transform: translateY(4px) scale(1.04, 0.96); }
+        100% { transform: translateY(-16px) scale(0.96, 1.05); }
+      }
+
+      /* ERRO */
+      .state-erro .gemi-floating {
+        animation: gemiWobble 0.6s ease-in-out infinite;
+      }
+      @keyframes gemiWobble {
+        0%, 100% { transform: translateX(0) rotate(0deg); }
+        25% { transform: translateX(-4px) rotate(-4deg); }
+        75% { transform: translateX(4px) rotate(4deg); }
+      }
+
+      /* Controls Panel */
+      .controls-card {
+        background: var(--surface);
+        border: 1px solid var(--outline);
+        border-radius: var(--radius);
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .section-title {
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--faint);
+        margin: 0;
+      }
+
+      .poses-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+
+      .pose-btn {
+        background: var(--surface-low);
+        border: 1px solid var(--outline);
+        color: var(--ink);
+        padding: 10px 12px;
+        border-radius: var(--radius-sm);
+        font-family: var(--font);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-align: left;
+        transition: all 0.15s var(--ease-out);
+      }
+
+      .pose-btn:hover {
+        background: var(--hover);
+        border-color: var(--faint);
+      }
+
+      .pose-btn.active {
+        background: var(--blue-soft);
+        border-color: var(--blue);
+        color: var(--blue);
+        font-weight: 600;
+      }
+
+      .sim-box {
+        background: var(--surface-low);
+        border: 1px solid var(--outline);
+        border-radius: var(--radius-sm);
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .sim-title {
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .sim-desc {
+        font-size: 12px;
+        color: var(--faint);
+        line-height: 1.4;
+        margin: 0;
+      }
+
+      .sim-btn {
+        width: 100%;
+        background: var(--blue);
+        color: #fff;
+        border: none;
+        padding: 9px;
+        border-radius: var(--radius-sm);
+        font-weight: 550;
+        cursor: pointer;
+        transition: opacity 0.15s ease, transform 0.1s ease;
+      }
+
+      .sim-btn:hover { opacity: 0.92; }
+      .sim-btn:active { transform: scale(0.98); }
+
+      /* Technical integration guide card */
+      .guide-card {
+        grid-column: 1 / -1;
+        background: var(--surface);
+        border: 1px solid var(--outline);
+        border-radius: var(--radius);
+        padding: 24px;
+      }
+
+      .guide-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+      }
+
+      .guide-item {
+        background: var(--surface-low);
+        border: 1px solid var(--outline);
+        border-radius: var(--radius-sm);
+        padding: 14px;
+      }
+
+      .guide-item h4 {
+        margin: 0 0 6px 0;
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .guide-item p {
+        margin: 0;
+        font-size: 12px;
+        color: var(--faint);
+        line-height: 1.45;
+      }
+
+      .guide-tag {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        background: var(--surface-high);
+        padding: 2px 5px;
+        border-radius: 4px;
+        color: var(--blue);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <h1 class="brand-title">Gemi · O Mascote do Antigravity</h1>
+        <span class="brand-badge">AGY - UsageHUD</span>
+      </div>
+      <div class="header-actions">
+        <button class="theme-toggle" id="theme-btn" title="Alternar tema claro/escuro">
+          <span id="theme-icon">☀️</span> <span id="theme-text">Claro</span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <!-- Visual Showcase Stage -->
+      <section class="stage-card" id="mascot-stage">
+        <div class="stage-header">
+          <div class="state-indicator">
+            <span class="state-dot" id="current-dot"></span>
+            <span id="current-label">Esperando você... (Ocioso)</span>
+          </div>
+          <span style="font-size: 12px; color: var(--faint); font-family: var(--font-mono);" id="current-activity">
+            status: idle
+          </span>
+        </div>
+
+        <div class="stage-viewport">
+          <!-- Mascot Main Entity -->
+          <div class="gemi-mascot-wrapper" id="gemi-wrapper">
+            <!-- Pulsing Aura Glow -->
+            <div class="gemi-aura" id="gemi-aura"></div>
+
+            <!-- Crown Accessory (Subagents Coordinator) -->
+            <div class="crown-accessory" id="crown">
+              <svg width="44" height="26" viewBox="0 0 44 26" fill="none">
+                <path d="M 4 22 L 8 8 L 18 16 L 22 2 L 26 16 L 36 8 L 40 22 Z" fill="url(#crown-grad)" stroke="#f59e0b" stroke-width="1.5" stroke-linejoin="round" />
+                <circle cx="22" cy="3" r="2.5" fill="#fef08a" />
+                <circle cx="8" cy="9" r="2" fill="#93c5fd" />
+                <circle cx="36" cy="9" r="2" fill="#93c5fd" />
+                <defs>
+                  <linearGradient id="crown-grad" x1="4" y1="2" x2="40" y2="22" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#fbbf24" />
+                    <stop offset="1" stop-color="#d97706" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+
+            <!-- Thinking Orbit Rings -->
+            <div class="thinking-orbit">
+              <div class="thinking-sparkle s1"></div>
+              <div class="thinking-sparkle s2"></div>
+              <div class="thinking-sparkle s3"></div>
+            </div>
+
+            <!-- Floating Code Document (Reading / Editing) -->
+            <div class="doc-accessory">
+              <div class="doc-scanline"></div>
+              <div style="color: var(--faint);">&lt;code&gt;</div>
+              <div style="color: var(--blue); font-weight: 500;">function solve() {</div>
+              <div style="color: var(--muted); padding-left: 8px;">return gemini.act()</div>
+              <div style="color: var(--blue); font-weight: 500;">}</div>
+            </div>
+
+            <!-- Terminal Badge -->
+            <div class="terminal-accessory">
+              <span>$</span>
+              <span style="color: #fff;">agy build</span>
+              <span class="cursor-blink"></span>
+            </div>
+
+            <!-- Confetti Layer (Celebration) -->
+            <div class="confetti-layer">
+              <div class="confetti-particle c1"></div>
+              <div class="confetti-particle c2"></div>
+              <div class="confetti-particle c3"></div>
+              <div class="confetti-particle c4"></div>
+              <div class="confetti-particle c5"></div>
+            </div>
+
+            <!-- Floating Mascot SVG -->
+            <div class="gemi-floating" id="gemi-float">
+              <svg class="gemi-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <!-- Primary Gemini Star Gradient -->
+                  <linearGradient id="gemi-grad" x1="12" y1="12" x2="108" y2="108" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#4285F4" />
+                    <stop offset="48%" stop-color="#7C4DFF" />
+                    <stop offset="100%" stop-color="#B388FF" />
+                  </linearGradient>
+
+                  <!-- Inner Core Light -->
+                  <radialGradient id="gemi-core" cx="60" cy="60" r="38" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.32" />
+                    <stop offset="70%" stop-color="#ffffff" stop-opacity="0" />
+                  </radialGradient>
+
+                  <filter id="gemi-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#7C4DFF" flood-opacity="0.35" />
+                  </filter>
+                </defs>
+
+                <!-- 4-pointed Gemini Sparkle Shape -->
+                <path
+                  class="gemi-body"
+                  id="gemi-body-path"
+                  d="M 60 8 C 65.5 35.5 84.5 54.5 112 60 C 84.5 65.5 65.5 84.5 60 112 C 54.5 84.5 35.5 65.5 8 60 C 35.5 54.5 54.5 35.5 60 8 Z"
+                  fill="url(#gemi-grad)"
+                  filter="url(#gemi-glow)"
+                />
+
+                <!-- Core highlight overlay -->
+                <circle cx="60" cy="60" r="36" fill="url(#gemi-core)" pointer-events="none" />
+
+                <!-- Face Group -->
+                <g class="gemi-face" id="gemi-face">
+                  <!-- Cheeks (Blush) -->
+                  <ellipse cx="46" cy="64" rx="4" ry="2.5" fill="#ff4081" opacity="0.35" />
+                  <ellipse cx="74" cy="64" rx="4" ry="2.5" fill="#ff4081" opacity="0.35" />
+
+                  <!-- Eyes with Natural Blink container -->
+                  <g class="gemi-eyelids" id="gemi-eyelids">
+                    <g class="gemi-eyes" id="gemi-eyes">
+                      <!-- Left Eye -->
+                      <g class="gemi-eye left-eye">
+                        <ellipse cx="51" cy="57" rx="3.8" ry="5.2" fill="#121317" />
+                        <circle cx="52.2" cy="55.2" r="1.6" fill="#ffffff" />
+                      </g>
+                      <!-- Right Eye -->
+                      <g class="gemi-eye right-eye">
+                        <ellipse cx="69" cy="57" rx="3.8" ry="5.2" fill="#121317" />
+                        <circle cx="70.2" cy="55.2" r="1.6" fill="#ffffff" />
+                      </g>
+                    </g>
+                  </g>
+
+                  <!-- Dynamic Mouth -->
+                  <path
+                    class="gemi-mouth"
+                    id="gemi-mouth"
+                    d="M 56 66 Q 60 70 64 66"
+                    stroke="#121317"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    fill="none"
+                  />
+                </g>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Subagents Pod (When Orchestrating) -->
+          <div class="subagents-pod" id="subagents-pod">
+            <div class="mini-gemi-card">
+              <svg class="mini-gemi-avatar" viewBox="0 0 120 120">
+                <path d="M 60 12 C 64 40 80 56 108 60 C 80 64 64 80 60 108 C 56 80 40 64 12 60 C 40 56 56 40 60 12 Z" fill="#4285f4" />
+                <circle cx="52" cy="58" r="3" fill="#fff" />
+                <circle cx="68" cy="58" r="3" fill="#fff" />
+                <path d="M 57 66 Q 60 69 63 66" stroke="#fff" stroke-width="2" fill="none" />
+              </svg>
+              <div class="mini-gemi-info">
+                <span class="mini-gemi-role">Pesquisador</span>
+                <span class="mini-gemi-task">lendo docs...</span>
+              </div>
+            </div>
+
+            <div class="mini-gemi-card">
+              <svg class="mini-gemi-avatar" viewBox="0 0 120 120">
+                <path d="M 60 12 C 64 40 80 56 108 60 C 80 64 64 80 60 108 C 56 80 40 64 12 60 C 40 56 56 40 60 12 Z" fill="#a855f7" />
+                <circle cx="52" cy="58" r="3" fill="#fff" />
+                <circle cx="68" cy="58" r="3" fill="#fff" />
+                <path d="M 57 66 Q 60 69 63 66" stroke="#fff" stroke-width="2" fill="none" />
+              </svg>
+              <div class="mini-gemi-info">
+                <span class="mini-gemi-role">Executor</span>
+                <span class="mini-gemi-task">editando código...</span>
+              </div>
+            </div>
+
+            <div class="mini-gemi-card">
+              <svg class="mini-gemi-avatar" viewBox="0 0 120 120">
+                <path d="M 60 12 C 64 40 80 56 108 60 C 80 64 64 80 60 108 C 56 80 40 64 12 60 C 40 56 56 40 60 12 Z" fill="#10b981" />
+                <circle cx="52" cy="58" r="3" fill="#fff" />
+                <circle cx="68" cy="58" r="3" fill="#fff" />
+                <path d="M 57 66 Q 60 69 63 66" stroke="#fff" stroke-width="2" fill="none" />
+              </svg>
+              <div class="mini-gemi-info">
+                <span class="mini-gemi-role">Auditor</span>
+                <span class="mini-gemi-task">rodando testes...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Poses & Simulation Controls -->
+      <aside class="controls-card">
+        <h2 class="section-title">Estados de Ação da IA</h2>
+
+        <div class="poses-grid">
+          <button class="pose-btn active" data-state="ocioso">
+            <span>💤</span> Ocioso / Espera
+          </button>
+          <button class="pose-btn" data-state="pensando">
+            <span>💭</span> Raciocinando
+          </button>
+          <button class="pose-btn" data-state="lendo">
+            <span>📖</span> Lendo Arquivo
+          </button>
+          <button class="pose-btn" data-state="editando">
+            <span>✍️</span> Editando Código
+          </button>
+          <button class="pose-btn" data-state="terminal">
+            <span>⚡</span> Terminal / Shell
+          </button>
+          <button class="pose-btn" data-state="orquestrando">
+            <span>👑</span> Subagentes
+          </button>
+          <button class="pose-btn" data-state="concluido">
+            <span>🎉</span> Concluído!
+          </button>
+          <button class="pose-btn" data-state="erro">
+            <span>⚠️</span> Erro / Bloqueio
+          </button>
+        </div>
+
+        <div class="sim-box">
+          <div class="sim-title">
+            <span>Fluxo de Sessão Completo</span>
+            <span style="font-size: 11px; color: var(--blue);">Auto-Play</span>
+          </div>
+          <p class="sim-desc">
+            Executa a sequência real de uma tarefa: você pede ➔ Gemi pensa ➔ lê arquivos ➔ edita código ➔ aciona subagentes ➔ conclui com sucesso.
+          </p>
+          <button class="sim-btn" id="run-simulation-btn">
+            ▶ Iniciar Simulação de Tarefa
+          </button>
+        </div>
+      </aside>
+
+      <!-- Technical Mapping Guide -->
+      <section class="guide-card">
+        <h2 class="section-title" style="margin-bottom: 8px;">Como cada estado se conecta ao Antigravity</h2>
+        <p style="font-size: 13px; color: var(--faint); margin: 0 0 16px 0;">
+          No <code>server.mjs</code>, o plugin lê o <code>transcript.jsonl</code>. Conforme a ferramenta invocada na conversa, o Gemi muda de pose na lateral:
+        </p>
+
+        <div class="guide-grid">
+          <div class="guide-item">
+            <h4><span>💭</span> Raciocínio (Thinking)</h4>
+            <p>Disparado quando a IA está em <code>PLANNER_RESPONSE</code> gerando <code>thinking</code> interno antes de usar ferramentas.</p>
+          </div>
+
+          <div class="guide-item">
+            <h4><span>📖</span> Leitura (<span class="guide-tag">read_file</span>, <span class="guide-tag">search_web</span>)</h4>
+            <p>Ativado durante exploração do workspace, busca no Google ou leitura de documentações e transcrições.</p>
+          </div>
+
+          <div class="guide-item">
+            <h4><span>✍️</span> Edição (<span class="guide-tag">edit_file</span>, <span class="guide-tag">write_file</span>)</h4>
+            <p>Ativado quando o Antigravity cria novos artefatos, altera código ou grava arquivos no projeto.</p>
+          </div>
+
+          <div class="guide-item">
+            <h4><span>⚡</span> Shell (<span class="guide-tag">run_command</span>)</h4>
+            <p>Ativado em compilações, testes unitários, git commits ou comandos PowerShell disparados pelo agente.</p>
+          </div>
+
+          <div class="guide-item">
+            <h4><span>👑</span> Subagentes (<span class="guide-tag">invoke_subagent</span>)</h4>
+            <p>Aparece a Coroa do Coordenador e os Mini-Gemi filhotes entram em ação enquanto o subagente trabalha em paralelo.</p>
+          </div>
+
+          <div class="guide-item">
+            <h4><span>🎉</span> Conclusão / Aguardo</h4>
+            <p>Quando a resposta termina com sucesso, Gemi comemora com confetes e volta suavemente ao modo de espera.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      // State definitions and labels
+      const STATES = {
+        ocioso: {
+          label: "Esperando você... (Ocioso)",
+          activity: "status: idle",
+          mouth: "M 56 66 Q 60 70 64 66",
+          mouthFill: "none",
+          eyes: { lx: 51, rx: 69, ly: 57, ry: 57, happy: false, dizzy: false },
+          grad: ["#4285F4", "#7C4DFF", "#B388FF"],
+          glow: "rgba(124, 77, 255, 0.28)"
+        },
+        pensando: {
+          label: "Raciocinando na solução...",
+          activity: "extended_thinking: reasoning",
+          mouth: "M 58 66 A 2.2 2.2 0 1 0 62 66 A 2.2 2.2 0 1 0 58 66 Z",
+          mouthFill: "#121317",
+          eyes: { lx: 53, rx: 71, ly: 54, ry: 54, happy: false, dizzy: false },
+          grad: ["#ab47bc", "#7c4dff", "#536dfe"],
+          glow: "rgba(171, 71, 188, 0.4)"
+        },
+        lendo: {
+          label: "Lendo arquivos e referências...",
+          activity: "tool: read_file / search",
+          mouth: "M 57 66 Q 60 68 63 66",
+          mouthFill: "none",
+          eyes: { lx: 51, rx: 69, ly: 57, ry: 57, happy: false, dizzy: false },
+          grad: ["#00b0ff", "#2979ff", "#7c4dff"],
+          glow: "rgba(0, 176, 255, 0.35)"
+        },
+        editando: {
+          label: "Editando código e criando arquivos...",
+          activity: "tool: edit_file / write_file",
+          mouth: "M 56 65 Q 60 67 64 65",
+          mouthFill: "none",
+          eyes: { lx: 51, rx: 69, ly: 58, ry: 58, happy: false, dizzy: false },
+          grad: ["#ff6d00", "#ff3d00", "#7c4dff"],
+          glow: "rgba(255, 109, 0, 0.35)"
+        },
+        terminal: {
+          label: "Executando comando no terminal...",
+          activity: "tool: run_command (PowerShell)",
+          mouth: "M 56 66 L 64 66",
+          mouthFill: "none",
+          eyes: { lx: 51, rx: 69, ly: 57, ry: 57, happy: false, dizzy: false },
+          grad: ["#2979ff", "#00e5ff", "#1de9b6"],
+          glow: "rgba(0, 229, 255, 0.35)"
+        },
+        orquestrando: {
+          label: "Orquestrando subagentes em paralelo...",
+          activity: "coordinating: 3 subagents active",
+          mouth: "M 55 65 Q 60 70 65 65",
+          mouthFill: "none",
+          eyes: { lx: 51, rx: 69, ly: 56, ry: 56, happy: false, dizzy: false },
+          grad: ["#ffd600", "#ff9100", "#7c4dff"],
+          glow: "rgba(255, 214, 0, 0.45)"
+        },
+        concluido: {
+          label: "Tarefa concluída com sucesso!",
+          activity: "turn_status: done (celebrating)",
+          mouth: "M 54 64 Q 60 73 66 64 Z",
+          mouthFill: "#ff4081",
+          eyes: { lx: 51, rx: 69, ly: 57, ry: 57, happy: true, dizzy: false },
+          grad: ["#00e676", "#1de9b6", "#2979ff"],
+          glow: "rgba(0, 230, 118, 0.45)"
+        },
+        erro: {
+          label: "Atenção: impedimento ou erro!",
+          activity: "status: error / blocked",
+          mouth: "M 55 68 Q 58 64 60 67 Q 62 70 65 66",
+          mouthFill: "none",
+          eyes: { lx: 51, rx: 69, ly: 57, ry: 57, happy: false, dizzy: true },
+          grad: ["#ff1744", "#d50000", "#ff6d00"],
+          glow: "rgba(255, 23, 68, 0.4)"
+        }
+      };
+
+      const wrapper = document.getElementById("gemi-wrapper");
+      const mouth = document.getElementById("gemi-mouth");
+      const eyesGroup = document.getElementById("gemi-eyes");
+      const aura = document.getElementById("gemi-aura");
+      const dot = document.getElementById("current-dot");
+      const label = document.getElementById("current-label");
+      const activity = document.getElementById("current-activity");
+      const gradStops = document.querySelectorAll("#gemi-grad stop");
+
+      function setGemiState(stateKey) {
+        const conf = STATES[stateKey];
+        if (!conf) return;
+
+        // Reset classes on wrapper
+        wrapper.className = "gemi-mascot-wrapper state-" + stateKey;
+
+        // Update dot and texts
+        dot.className = "state-dot " + stateKey;
+        label.textContent = conf.label;
+        activity.textContent = conf.activity;
+
+        // Update mouth
+        mouth.setAttribute("d", conf.mouth);
+        mouth.setAttribute("fill", conf.mouthFill);
+
+        // Update gradient and glow
+        gradStops[0].setAttribute("stop-color", conf.grad[0]);
+        gradStops[1].setAttribute("stop-color", conf.grad[1]);
+        gradStops[2].setAttribute("stop-color", conf.grad[2]);
+        aura.style.background = `radial-gradient(circle, ${conf.glow} 0%, rgba(66, 133, 244, 0.1) 45%, transparent 70%)`;
+
+        // Update eyes (happy curves or dizzy vs normal)
+        if (conf.eyes.happy) {
+          eyesGroup.innerHTML = `
+            <path d="M 47 57 Q 51 52 55 57" stroke="#121317" stroke-width="2.6" stroke-linecap="round" fill="none" />
+            <path d="M 65 57 Q 69 52 73 57" stroke="#121317" stroke-width="2.6" stroke-linecap="round" fill="none" />
+          `;
+        } else if (conf.eyes.dizzy) {
+          eyesGroup.innerHTML = `
+            <text x="47" y="60" font-size="11" font-weight="bold" fill="#121317">X</text>
+            <text x="65" y="60" font-size="11" font-weight="bold" fill="#121317">X</text>
+          `;
+        } else {
+          eyesGroup.innerHTML = `
+            <g class="gemi-eye left-eye">
+              <ellipse cx="${conf.eyes.lx}" cy="${conf.eyes.ly}" rx="3.8" ry="5.2" fill="#121317" />
+              <circle cx="${conf.eyes.lx + 1.2}" cy="${conf.eyes.ly - 1.8}" r="1.6" fill="#ffffff" />
+            </g>
+            <g class="gemi-eye right-eye">
+              <ellipse cx="${conf.eyes.rx}" cy="${conf.eyes.ry}" rx="3.8" ry="5.2" fill="#121317" />
+              <circle cx="${conf.eyes.rx + 1.2}" cy="${conf.eyes.ry - 1.8}" r="1.6" fill="#ffffff" />
+            </g>
+          `;
+        }
+
+        // Update buttons
+        document.querySelectorAll(".pose-btn").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.state === stateKey);
+        });
+      }
+
+      // Event listeners for pose buttons
+      document.querySelectorAll(".pose-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          stopSimulation();
+          setGemiState(btn.dataset.state);
+        });
+      });
+
+      // Simulation runner
+      let simTimeout = null;
+      let isSimulating = false;
+
+      function stopSimulation() {
+        if (simTimeout) clearTimeout(simTimeout);
+        isSimulating = false;
+        document.getElementById("run-simulation-btn").textContent = "▶ Iniciar Simulação de Tarefa";
+      }
+
+      function runSimulation() {
+        if (isSimulating) {
+          stopSimulation();
+          setGemiState("ocioso");
+          return;
+        }
+
+        isSimulating = true;
+        document.getElementById("run-simulation-btn").textContent = "⏹ Parar Simulação";
+
+        const flow = [
+          { state: "pensando", delay: 1800 },
+          { state: "lendo", delay: 2200 },
+          { state: "editando", delay: 2400 },
+          { state: "terminal", delay: 2000 },
+          { state: "orquestrando", delay: 3000 },
+          { state: "concluido", delay: 2800 },
+          { state: "ocioso", delay: 1000 }
+        ];
+
+        let step = 0;
+        function nextStep() {
+          if (!isSimulating) return;
+          if (step >= flow.length) {
+            stopSimulation();
+            return;
+          }
+          const current = flow[step];
+          setGemiState(current.state);
+          step++;
+          simTimeout = setTimeout(nextStep, current.delay);
+        }
+
+        nextStep();
+      }
+
+      document.getElementById("run-simulation-btn").addEventListener("click", runSimulation);
+
+      // Theme toggle
+      const themeBtn = document.getElementById("theme-btn");
+      const themeIcon = document.getElementById("theme-icon");
+      const themeText = document.getElementById("theme-text");
+
+      themeBtn.addEventListener("click", () => {
+        const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+        if (isDark) {
+          document.documentElement.setAttribute("data-theme", "light");
+          themeIcon.textContent = "🌙";
+          themeText.textContent = "Escuro";
+        } else {
+          document.documentElement.setAttribute("data-theme", "dark");
+          themeIcon.textContent = "☀️";
+          themeText.textContent = "Claro";
+        }
+      });
+    </script>
+  </body>
+</html>

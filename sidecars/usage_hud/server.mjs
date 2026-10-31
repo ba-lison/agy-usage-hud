@@ -432,6 +432,21 @@ async function handleRequest(req, res) {
     return
   }
 
+  if (pathname === '/mascote-preview.html') {
+    const previewPath = path.join(__dirname, 'mascote-preview.html')
+    if (fs.existsSync(previewPath)) {
+      res.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
+      })
+      res.end(fs.readFileSync(previewPath, 'utf8'))
+    } else {
+      res.writeHead(404, { 'Content-Type': 'text/plain' })
+      res.end('mascote-preview.html not found')
+    }
+    return
+  }
+
   if (pathname === '/preload.js') {
     const home = getHomeDir()
     const pPath = path.join(home, '.gemini', 'antigravity', 'lib', 'node_modules', 'sidecar_sdk', 'preload.js')

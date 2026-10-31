@@ -1,0 +1,238 @@
+{
+  "checkedAt": "2026-10-31T01:53:42.150Z",
+  "checks": [
+    "Selected retro sprite and block eyes",
+    "Brand header, Antigravity symbol, panel footer and source caption removed; model row remains absent",
+    "World globe replaces web magnifier; reading glasses; thought bubble and half-closed block eyes; mini Gemini companions",
+    "Informative tool summaries",
+    "Eight color frames with identical alpha masks",
+    "Float and color opacity change with time",
+    "Static gallery previews",
+    "Pause and reduced motion in parent and HUD",
+    "Token section and accumulated token total removed"
+  ],
+  "agentChecks": [
+    {
+      "count": 1,
+      "collapsePreservesActivity": true,
+      "stopOne": true,
+      "stopAll": true
+    },
+    {
+      "count": 2,
+      "collapsePreservesActivity": true,
+      "stopOne": true,
+      "stopAll": true
+    },
+    {
+      "count": 3,
+      "collapsePreservesActivity": true,
+      "stopOne": true,
+      "stopAll": true
+    },
+    {
+      "count": 4,
+      "collapsePreservesActivity": true,
+      "stopOne": true,
+      "stopAll": true
+    },
+    {
+      "count": 5,
+      "collapsePreservesActivity": true,
+      "stopOne": true,
+      "stopAll": true
+    },
+    {
+      "count": 6,
+      "collapsePreservesActivity": true,
+      "stopOne": true,
+      "stopAll": true
+    }
+  ],
+  "summaries": [
+    {
+      "activity": "web",
+      "text": "Busca: animação de mascotes em pixel art"
+    },
+    {
+      "activity": "page",
+      "text": "Fonte: antigravity.google"
+    },
+    {
+      "activity": "reading",
+      "text": "Arquivo: painel.html"
+    },
+    {
+      "activity": "files",
+      "text": "Busca no projeto: mascote"
+    },
+    {
+      "activity": "writing",
+      "text": "Arquivo: painel.html"
+    },
+    {
+      "activity": "terminal",
+      "text": "Chamada ao terminal solicitada."
+    },
+    {
+      "activity": "agents",
+      "text": "3 de 3 subagentes em atividade · exemplo"
+    },
+    {
+      "activity": "question",
+      "text": "A ferramenta de pergunta ou permissão foi chamada."
+    },
+    {
+      "activity": "model",
+      "text": "O modelo está preparando a próxima resposta."
+    }
+  ],
+  "layouts": [
+    {
+      "theme": "dark",
+      "width": 320,
+      "scroll": 320,
+      "hud": {
+        "width": 290,
+        "scroll": 290,
+        "height": 1028,
+        "content": 1028
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "scroll": 390,
+      "hud": {
+        "width": 348,
+        "scroll": 348,
+        "height": 958,
+        "content": 958
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 768,
+      "scroll": 768,
+      "hud": {
+        "width": 558,
+        "scroll": 558,
+        "height": 957,
+        "content": 957
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "scroll": 1024,
+      "hud": {
+        "width": 388,
+        "scroll": 388,
+        "height": 962,
+        "content": 962
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "scroll": 1440,
+      "hud": {
+        "width": 408,
+        "scroll": 408,
+        "height": 962,
+        "content": 962
+      }
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "scroll": 320,
+      "hud": {
+        "width": 290,
+        "scroll": 290,
+        "height": 1028,
+        "content": 1028
+      }
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "scroll": 390,
+      "hud": {
+        "width": 348,
+        "scroll": 348,
+        "height": 958,
+        "content": 958
+      }
+    },
+    {
+      "theme": "light",
+      "width": 768,
+      "scroll": 768,
+      "hud": {
+        "width": 558,
+        "scroll": 558,
+        "height": 957,
+        "content": 957
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "scroll": 1024,
+      "hud": {
+        "width": 388,
+        "scroll": 388,
+        "height": 962,
+        "content": 962
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "scroll": 1440,
+      "hud": {
+        "width": 408,
+        "scroll": 408,
+        "height": 962,
+        "content": 962
+      }
+    }
+  ],
+  "motion": {
+    "before": {
+      "gaze": "matrix(1, 0, 0, 1, -3, -1)",
+      "hudGaze": "matrix(1, 0, 0, 1, -3, -1)",
+      "body": "matrix(0.999945, -0.0104718, 0.0104718, 0.999945, 0, 2)",
+      "palette": [
+        "1",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    "after": {
+      "gaze": "matrix(1, 0, 0, 1, 3, -2)",
+      "hudGaze": "matrix(1, 0, 0, 1, 3, -2)",
+      "body": "matrix(0.999945, 0.0104718, -0.0104718, 0.999945, 0, -3)",
+      "palette": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "1"
+      ]
+    }
+  },
+  "errors": [],
+  "externalRequests": [],
+  "limits": [
+    "Proposal only; live event transport still absent",
+    "No physical phone or Antigravity webview test"
+  ]
+}

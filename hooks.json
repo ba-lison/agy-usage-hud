@@ -1,0 +1,25 @@
+{
+  "usage-hud": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "node ./scripts/update-hud.mjs",
+        "timeout": 10
+      }
+    ],
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "node ./scripts/update-hud.mjs",
+        "timeout": 10
+      }
+    ],
+    "PostInvocation": [
+      {
+        "type": "command",
+        "command": "node ./scripts/update-hud.mjs",
+        "timeout": 10
+      }
+    ]
+  }
+}

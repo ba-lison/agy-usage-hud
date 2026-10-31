@@ -1,0 +1,192 @@
+{
+  "checkedAt": "2026-10-31T01:33:28.447Z",
+  "checks": [
+    "Selected retro sprite and block eyes",
+    "Antigravity symbol retained, Google and model row removed",
+    "Simple magnifying glass",
+    "Informative tool summaries",
+    "Eight color frames with identical alpha masks",
+    "Float and color opacity change with time",
+    "Static gallery previews",
+    "Pause and reduced motion in parent and HUD",
+    "64-frame GIF from the actual HTML"
+  ],
+  "summaries": [
+    {
+      "activity": "web",
+      "text": "Busca: animação de mascotes em pixel art"
+    },
+    {
+      "activity": "page",
+      "text": "Fonte: antigravity.google"
+    },
+    {
+      "activity": "reading",
+      "text": "Arquivo: painel.html"
+    },
+    {
+      "activity": "files",
+      "text": "Busca no projeto: mascote"
+    },
+    {
+      "activity": "writing",
+      "text": "Arquivo: painel.html"
+    },
+    {
+      "activity": "terminal",
+      "text": "Chamada ao terminal solicitada."
+    },
+    {
+      "activity": "agents",
+      "text": "Chamada de subagente solicitada."
+    },
+    {
+      "activity": "question",
+      "text": "A ferramenta de pergunta ou permissão foi chamada."
+    }
+  ],
+  "layouts": [
+    {
+      "theme": "dark",
+      "width": 320,
+      "scroll": 320,
+      "hud": {
+        "width": 290,
+        "scroll": 290,
+        "height": 815,
+        "content": 815
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "scroll": 390,
+      "hud": {
+        "width": 348,
+        "scroll": 348,
+        "height": 815,
+        "content": 815
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 768,
+      "scroll": 768,
+      "hud": {
+        "width": 558,
+        "scroll": 558,
+        "height": 790,
+        "content": 790
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "scroll": 1024,
+      "hud": {
+        "width": 388,
+        "scroll": 388,
+        "height": 795,
+        "content": 795
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "scroll": 1440,
+      "hud": {
+        "width": 408,
+        "scroll": 408,
+        "height": 795,
+        "content": 795
+      }
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "scroll": 320,
+      "hud": {
+        "width": 290,
+        "scroll": 290,
+        "height": 815,
+        "content": 815
+      }
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "scroll": 390,
+      "hud": {
+        "width": 348,
+        "scroll": 348,
+        "height": 815,
+        "content": 815
+      }
+    },
+    {
+      "theme": "light",
+      "width": 768,
+      "scroll": 768,
+      "hud": {
+        "width": 558,
+        "scroll": 558,
+        "height": 790,
+        "content": 790
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "scroll": 1024,
+      "hud": {
+        "width": 388,
+        "scroll": 388,
+        "height": 795,
+        "content": 795
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "scroll": 1440,
+      "hud": {
+        "width": 408,
+        "scroll": 408,
+        "height": 795,
+        "content": 795
+      }
+    }
+  ],
+  "motion": {
+    "before": {
+      "body": "matrix(0.999945, -0.0104718, 0.0104718, 0.999945, 0, 2)",
+      "palette": [
+        "1",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    "after": {
+      "body": "matrix(0.999945, 0.0104718, -0.0104718, 0.999945, 0, -3)",
+      "palette": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "1"
+      ]
+    }
+  },
+  "errors": [],
+  "externalRequests": [],
+  "limits": [
+    "Proposal only; live event transport still absent",
+    "No physical phone or Antigravity webview test"
+  ]
+}

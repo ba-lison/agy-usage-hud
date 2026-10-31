@@ -1,0 +1,134 @@
+{
+  "checkedAt": "2026-10-31T01:02:23.190Z",
+  "browser": "Chrome headless",
+  "offline": true,
+  "javascriptErrors": [],
+  "externalRequests": [],
+  "shapesAndStates": 32,
+  "layouts": [
+    {
+      "theme": "dark",
+      "width": 320,
+      "scroll": 320,
+      "hud": {
+        "width": 290,
+        "scroll": 290,
+        "content": 828,
+        "height": 828
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "scroll": 390,
+      "hud": {
+        "width": 348,
+        "scroll": 348,
+        "content": 828,
+        "height": 828
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 768,
+      "scroll": 768,
+      "hud": {
+        "width": 558,
+        "scroll": 558,
+        "content": 803,
+        "height": 803
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "scroll": 1024,
+      "hud": {
+        "width": 388,
+        "scroll": 388,
+        "content": 808,
+        "height": 808
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "scroll": 1440,
+      "hud": {
+        "width": 408,
+        "scroll": 408,
+        "content": 808,
+        "height": 808
+      }
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "scroll": 320,
+      "hud": {
+        "width": 290,
+        "scroll": 290,
+        "content": 828,
+        "height": 828
+      }
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "scroll": 390,
+      "hud": {
+        "width": 348,
+        "scroll": 348,
+        "content": 828,
+        "height": 828
+      }
+    },
+    {
+      "theme": "light",
+      "width": 768,
+      "scroll": 768,
+      "hud": {
+        "width": 558,
+        "scroll": 558,
+        "content": 803,
+        "height": 803
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "scroll": 1024,
+      "hud": {
+        "width": 388,
+        "scroll": 388,
+        "content": 808,
+        "height": 808
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "scroll": 1440,
+      "hud": {
+        "width": 408,
+        "scroll": 408,
+        "content": 808,
+        "height": 808
+      }
+    }
+  ],
+  "checks": [
+    "Original HUD snapshot values",
+    "Embedded Google Sans Flex in page and HUD",
+    "32 combinations reflected in HUD",
+    "Keyboard activation and focus",
+    "Theme toggle",
+    "Pause and reduced motion",
+    "Simulation through completion and cancellation",
+    "Embedded original assets decode offline"
+  ],
+  "limits": [
+    "Proposal only; no live session integration",
+    "No physical phone or Antigravity webview test"
+  ]
+}

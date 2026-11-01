@@ -10,7 +10,7 @@ Documento técnico de referência sobre a integração da interface V7 com os ev
 ## Como carregar a atualização no Antigravity
 
 Conferido em 2026-11-01. O plugin está instalado em:
-C:\Users\aliso\.gemini\config\plugins\usage-hud
+%USERPROFILE%\.gemini\config\plugins\usage-hud
 
 ### Para Bali carregar esta correção
 
@@ -135,7 +135,7 @@ Conforme auditoria do executável `language_server.exe agentapi --help`:
 - Limites: browser headless com o preload real; a janela aberta do Antigravity não foi controlada. A precisão das cotas e dos estados vindos do servidor não foi validada com uma sessão real nesta correção. O cancelamento direto de subagentes permanece não suportado.
 - Instalação: atualizar somente sidecars/usage_hud/ui.html na cópia local do plugin, preservando o original e comparando o hash. O servidor lê esse arquivo a cada requisição; recriar a página do HUD carrega a correção. O procedimento e o limite do teste na janela real estão na seção Como carregar a atualização no Antigravity.
 
-Aplicação local conferida em 2026-11-01: C:\Users\aliso\.gemini\config\plugins\usage-hud\sidecars\usage_hud\ui.html. O servidor ativo entregou exatamente o HTML instalado, conferido por SHA256. Original e manifesto preservados em E:\Users\aliso\Documents\_backup_original\agy-hud-runtime-2026-11-01-31ac20f5\. Bali confirmou o funcionamento da atualização em 2026-11-01 e encerrou a correção visual.
+Aplicação local conferida em 2026-11-01: %USERPROFILE%\.gemini\config\plugins\usage-hud\sidecars\usage_hud\ui.html. O servidor ativo entregou exatamente o HTML instalado, conferido por SHA256. Os originais foram preservados em backup local, fora do repositório. Bali confirmou o funcionamento da atualização em 2026-11-01 e encerrou a correção visual.
 
 
 ### Cards iguais e subagentes somente para acompanhamento — 2026-11-01
@@ -150,4 +150,13 @@ Aplicação local conferida em 2026-11-01: C:\Users\aliso\.gemini\config\plugins
 - A correção visual foi validada por Bali e encerrada a pedido dele. Não retomar o HUD como defeito pendente sem novo relato.
 - Mantidos os cards com o mesmo fundo e a lista de subagentes somente para acompanhamento, com Ocultar/Mostrar.
 - A confirmação do usuário valida o resultado observado; não equivale a um teste exaustivo da precisão de cotas, descoberta de subagentes ou todos os estados possíveis.
-- Próxima frente solicitada: disponibilizar o projeto em um repositório GitHub. Existe Git local, sem remoto configurado; a consulta autenticada de 2026-11-01 não encontrou ba-lison/agy-usage-hud. Proposta: criar esse destino como privado e publicar a main com o histórico local, após autorização da ação concreta.
+- Publicação autorizada em 2026-11-01: repositório público ba-lison/agy-usage-hud, licença MIT para o código próprio, preservação dos commits existentes e releases. Os 20 commits anteriores à preparação da publicação começam em 30/10/2026; suas datas e mensagens permanecem intactas.
+
+
+## Distribuição pública
+
+- Runtime: Antigravity App, Windows e Node.js 22+ no PATH. Teste local: Node.js 22.21.1. Não há dependências npm de runtime; o SDK vem da instalação do host.
+- Desenvolvimento: o teste visual requer Playwright e Chrome. O teste de integração usa somente Node.js.
+- sync.bat usa USERPROFILE em vez de um nome de usuário fixo e também copia a licença MIT, os avisos de terceiros e as licenças das fontes.
+- A release v1.0.0 acompanha a versão 1.0.0 de plugin.json. O pacote de runtime exclui .git, .worktrees, propostas, capturas de desenvolvimento e testes.
+- O histórico Git contém a evolução original. Não foram inventadas datas ou versões históricas nem reescritos os commits de criação.

@@ -21,7 +21,7 @@ C:\Users\aliso\.gemini\config\plugins\usage-hud
 
 O botão circular do HUD é **Atualizar dados**: consulta métricas e atividade; não recarrega o HTML nem instala atualizações.
 
-O servidor ativo foi consultado por HTTP e entregou o arquivo instalado, com hash idêntico. Fechar/reabrir a aba na janela real ainda precisa ser confirmado com Bali; não foi executado pelo agente. O reload do HTML ao recriar a página é sustentado pelo código de server.mjs, que lê ui.html a cada requisição e envia Cache-Control: no-store.
+O servidor ativo foi consultado por HTTP e entregou o arquivo instalado, com hash idêntico. Em 2026-11-01, Bali confirmou que a atualização funcionou ("deu super certo") e pediu o encerramento desta frente. Ele não detalhou se reabriu apenas a aba ou reiniciou o aplicativo. O agente não controlou a janela real. O reload do HTML ao recriar a página é sustentado pelo código de server.mjs, que lê ui.html a cada requisição e envia Cache-Control: no-store.
 
 ### Para futuras atualizações
 
@@ -36,7 +36,7 @@ O servidor ativo foi consultado por HTTP e entregou o arquivo instalado, com has
 - [Plugins do Antigravity](https://antigravity.google/docs/plugins): instalação local/global e gerenciamento em Customizations > Installed.
 - [Sidecars do Antigravity](https://antigravity.google/docs/sidecars): descoberta por sidecar.json, pasta global, configuração e ciclo de vida gerenciado pelo aplicativo.
 - Fontes locais: sidecars/usage_hud/sidecar.json, sidecars/usage_hud/server.mjs e sync.bat.
-- As fontes oficiais não especificam que fechar uma aba sempre destrói seu webview. Por isso o procedimento distingue a recriação da página, confirmada no código do HUD, do comportamento da aba, pendente de conferência na janela real.
+- As fontes oficiais não especificam que fechar uma aba sempre destrói seu webview. Por isso o procedimento distingue a recriação da página, confirmada no código do HUD, do comportamento exato da aba. Bali validou o resultado da atualização, sem detalhar o modo de reabertura.
 
 ## 1. Visão Geral da Arquitetura
 
@@ -135,7 +135,7 @@ Conforme auditoria do executável `language_server.exe agentapi --help`:
 - Limites: browser headless com o preload real; a janela aberta do Antigravity não foi controlada. A precisão das cotas e dos estados vindos do servidor não foi validada com uma sessão real nesta correção. O cancelamento direto de subagentes permanece não suportado.
 - Instalação: atualizar somente sidecars/usage_hud/ui.html na cópia local do plugin, preservando o original e comparando o hash. O servidor lê esse arquivo a cada requisição; recriar a página do HUD carrega a correção. O procedimento e o limite do teste na janela real estão na seção Como carregar a atualização no Antigravity.
 
-Aplicação local conferida em 2026-11-01: C:\Users\aliso\.gemini\config\plugins\usage-hud\sidecars\usage_hud\ui.html. O servidor ativo entregou exatamente o HTML instalado, conferido por SHA256. Original e manifesto preservados em E:\Users\aliso\Documents\_backup_original\agy-hud-runtime-2026-11-01-31ac20f5\. A aba já aberta ainda precisa ser reaberta por Bali.
+Aplicação local conferida em 2026-11-01: C:\Users\aliso\.gemini\config\plugins\usage-hud\sidecars\usage_hud\ui.html. O servidor ativo entregou exatamente o HTML instalado, conferido por SHA256. Original e manifesto preservados em E:\Users\aliso\Documents\_backup_original\agy-hud-runtime-2026-11-01-31ac20f5\. Bali confirmou o funcionamento da atualização em 2026-11-01 e encerrou a correção visual.
 
 
 ### Cards iguais e subagentes somente para acompanhamento — 2026-11-01
@@ -143,3 +143,11 @@ Aplicação local conferida em 2026-11-01: C:\Users\aliso\.gemini\config\plugins
 - O card Contexto usa exatamente o mesmo token do card Janela de 5 horas (--hud-surface-low), nos dois temas.
 - Bali dispensou as alternativas de parada pelo painel. Foram retirados os botões individuais, o botão geral, a cópia do pedido, o campo de cópia manual, os avisos e seus handlers. Ocultar/Mostrar preserva a atividade dos subagentes.
 - A regressão visual confere os fundos iguais, avatar/tarefa, ausência desses controles e nenhuma chamada ao endpoint legado de parada.
+
+
+## Encerramento confirmado por Bali — 2026-11-01
+
+- A correção visual foi validada por Bali e encerrada a pedido dele. Não retomar o HUD como defeito pendente sem novo relato.
+- Mantidos os cards com o mesmo fundo e a lista de subagentes somente para acompanhamento, com Ocultar/Mostrar.
+- A confirmação do usuário valida o resultado observado; não equivale a um teste exaustivo da precisão de cotas, descoberta de subagentes ou todos os estados possíveis.
+- Próxima frente solicitada: disponibilizar o projeto em um repositório GitHub. Existe Git local, sem remoto configurado; a consulta autenticada de 2026-11-01 não encontrou ba-lison/agy-usage-hud. Proposta: criar esse destino como privado e publicar a main com o histórico local, após autorização da ação concreta.

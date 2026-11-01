@@ -3,15 +3,23 @@
   <img src="assets/capa-sparky.png" alt="AGY UsageHUD com Sparky — atividade, contexto e janela de 5 horas no Antigravity" width="1280">
 </picture>
 
-# AGY UsageHUD
+<h1 align="center">AGY UsageHUD</h1>
 
-Plugin independente para o Antigravity, com um painel lateral de atividade da sessão, subagentes, capacidade de contexto e janela de uso de 5 horas. Usa um **sidecar local** para coletar os dados e servir a interface.
+<p align="center">Plugin independente para o Antigravity, com um painel lateral de atividade da sessão, subagentes, capacidade de contexto e janela de uso de 5 horas. Usa um <strong>sidecar local</strong> para coletar os dados e servir a interface.</p>
 
-![Windows](https://img.shields.io/badge/Windows-validado-0F3D3A?style=flat-square)
-![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-161616?style=flat-square)
-[![Licença MIT](https://img.shields.io/badge/Licen%C3%A7a-MIT-0F3D3A?style=flat-square)](LICENSE)
+<p align="center">
+  <img src="https://img.shields.io/badge/Windows-validado-0F3D3A?style=flat-square" alt="Windows validado">
+  <img src="https://img.shields.io/badge/Node.js-22%2B-161616?style=flat-square" alt="Node.js 22+">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/Licen%C3%A7a-MIT-0F3D3A?style=flat-square" alt="Licença MIT"></a>
+</p>
 
-[Começar a usar](#começar-a-usar) · [Ver recursos](#demonstração-e-recursos) · [Documentação](#documentação-e-ajuda)
+<p align="center">
+  <a href="#começar-a-usar">Começar a usar</a> &nbsp; / &nbsp;
+  <a href="#demonstração-e-recursos">Ver recursos</a> &nbsp; / &nbsp;
+  <a href="#documentação-e-ajuda">Documentação</a>
+</p>
+
+---
 
 ## Sobre o projeto
 

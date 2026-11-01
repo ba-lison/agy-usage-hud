@@ -1,0 +1,502 @@
+{
+  "realAntigravityPreload": true,
+  "demoData": true,
+  "checks": [
+    {
+      "theme": "dark",
+      "width": 320,
+      "scroll": 320,
+      "contrasts": [
+        {
+          "selector": "#companion-state",
+          "ratio": 15.094768804236065
+        },
+        {
+          "selector": "#companion-detail",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": ".metric-caption",
+          "ratio": 6.752731292825665
+        },
+        {
+          "selector": "#time-title",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": "#context-max-label",
+          "ratio": 11.748332242654985
+        },
+        {
+          "selector": ".usage-caption",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": "#context-free-label",
+          "ratio": 11.748332242654985
+        },
+        {
+          "selector": "#toggle-agents",
+          "ratio": 11.748332242654985
+        },
+        {
+          "selector": ".icon-btn",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": ".agent-copy > span",
+          "ratio": 11.748332242654985
+        }
+      ],
+      "aligned": true,
+      "font": "\"Google Sans Flex\", \"Google Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif"
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "scroll": 390,
+      "contrasts": [
+        {
+          "selector": "#companion-state",
+          "ratio": 15.094768804236065
+        },
+        {
+          "selector": "#companion-detail",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": ".metric-caption",
+          "ratio": 6.752731292825665
+        },
+        {
+          "selector": "#time-title",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": "#context-max-label",
+          "ratio": 11.748332242654985
+        },
+        {
+          "selector": ".usage-caption",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": "#context-free-label",
+          "ratio": 11.748332242654985
+        },
+        {
+          "selector": "#toggle-agents",
+          "ratio": 11.748332242654985
+        },
+        {
+          "selector": ".icon-btn",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": ".agent-copy > span",
+          "ratio": 11.748332242654985
+        }
+      ],
+      "aligned": true,
+      "font": "\"Google Sans Flex\", \"Google Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif"
+    },
+    {
+      "theme": "dark",
+      "width": 472,
+      "scroll": 472,
+      "contrasts": [
+        {
+          "selector": "#companion-state",
+          "ratio": 15.094768804236065
+        },
+        {
+          "selector": "#companion-detail",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": ".metric-caption",
+          "ratio": 6.752731292825665
+        },
+        {
+          "selector": "#time-title",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": "#context-max-label",
+          "ratio": 11.748332242654985
+        },
+        {
+          "selector": ".usage-caption",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": "#context-free-label",
+          "ratio": 11.748332242654985
+        },
+        {
+          "selector": "#toggle-agents",
+          "ratio": 11.748332242654985
+        },
+        {
+          "selector": ".icon-btn",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": ".agent-copy > span",
+          "ratio": 11.748332242654985
+        }
+      ],
+      "aligned": true,
+      "font": "\"Google Sans Flex\", \"Google Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif"
+    },
+    {
+      "theme": "dark",
+      "width": 680,
+      "scroll": 680,
+      "contrasts": [
+        {
+          "selector": "#companion-state",
+          "ratio": 15.094768804236065
+        },
+        {
+          "selector": "#companion-detail",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": ".metric-caption",
+          "ratio": 6.752731292825665
+        },
+        {
+          "selector": "#time-title",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": "#context-max-label",
+          "ratio": 11.748332242654985
+        },
+        {
+          "selector": ".usage-caption",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": "#context-free-label",
+          "ratio": 11.748332242654985
+        },
+        {
+          "selector": "#toggle-agents",
+          "ratio": 11.748332242654985
+        },
+        {
+          "selector": ".icon-btn",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": ".agent-copy > span",
+          "ratio": 11.748332242654985
+        }
+      ],
+      "aligned": true,
+      "font": "\"Google Sans Flex\", \"Google Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif"
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "scroll": 1024,
+      "contrasts": [
+        {
+          "selector": "#companion-state",
+          "ratio": 15.094768804236065
+        },
+        {
+          "selector": "#companion-detail",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": ".metric-caption",
+          "ratio": 6.752731292825665
+        },
+        {
+          "selector": "#time-title",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": "#context-max-label",
+          "ratio": 11.748332242654985
+        },
+        {
+          "selector": ".usage-caption",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": "#context-free-label",
+          "ratio": 11.748332242654985
+        },
+        {
+          "selector": "#toggle-agents",
+          "ratio": 11.748332242654985
+        },
+        {
+          "selector": ".icon-btn",
+          "ratio": 10.629622722405248
+        },
+        {
+          "selector": ".agent-copy > span",
+          "ratio": 11.748332242654985
+        }
+      ],
+      "aligned": true,
+      "font": "\"Google Sans Flex\", \"Google Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif"
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "scroll": 320,
+      "contrasts": [
+        {
+          "selector": "#companion-state",
+          "ratio": 17.63304208116781
+        },
+        {
+          "selector": "#companion-detail",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": ".metric-caption",
+          "ratio": 5.09781123095597
+        },
+        {
+          "selector": "#time-title",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": "#context-max-label",
+          "ratio": 9.285866173120395
+        },
+        {
+          "selector": ".usage-caption",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": "#context-free-label",
+          "ratio": 9.285866173120395
+        },
+        {
+          "selector": "#toggle-agents",
+          "ratio": 9.285866173120395
+        },
+        {
+          "selector": ".icon-btn",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": ".agent-copy > span",
+          "ratio": 9.285866173120395
+        }
+      ],
+      "aligned": true,
+      "font": "\"Google Sans Flex\", \"Google Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif"
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "scroll": 390,
+      "contrasts": [
+        {
+          "selector": "#companion-state",
+          "ratio": 17.63304208116781
+        },
+        {
+          "selector": "#companion-detail",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": ".metric-caption",
+          "ratio": 5.09781123095597
+        },
+        {
+          "selector": "#time-title",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": "#context-max-label",
+          "ratio": 9.285866173120395
+        },
+        {
+          "selector": ".usage-caption",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": "#context-free-label",
+          "ratio": 9.285866173120395
+        },
+        {
+          "selector": "#toggle-agents",
+          "ratio": 9.285866173120395
+        },
+        {
+          "selector": ".icon-btn",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": ".agent-copy > span",
+          "ratio": 9.285866173120395
+        }
+      ],
+      "aligned": true,
+      "font": "\"Google Sans Flex\", \"Google Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif"
+    },
+    {
+      "theme": "light",
+      "width": 472,
+      "scroll": 472,
+      "contrasts": [
+        {
+          "selector": "#companion-state",
+          "ratio": 17.63304208116781
+        },
+        {
+          "selector": "#companion-detail",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": ".metric-caption",
+          "ratio": 5.09781123095597
+        },
+        {
+          "selector": "#time-title",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": "#context-max-label",
+          "ratio": 9.285866173120395
+        },
+        {
+          "selector": ".usage-caption",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": "#context-free-label",
+          "ratio": 9.285866173120395
+        },
+        {
+          "selector": "#toggle-agents",
+          "ratio": 9.285866173120395
+        },
+        {
+          "selector": ".icon-btn",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": ".agent-copy > span",
+          "ratio": 9.285866173120395
+        }
+      ],
+      "aligned": true,
+      "font": "\"Google Sans Flex\", \"Google Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif"
+    },
+    {
+      "theme": "light",
+      "width": 680,
+      "scroll": 680,
+      "contrasts": [
+        {
+          "selector": "#companion-state",
+          "ratio": 17.63304208116781
+        },
+        {
+          "selector": "#companion-detail",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": ".metric-caption",
+          "ratio": 5.09781123095597
+        },
+        {
+          "selector": "#time-title",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": "#context-max-label",
+          "ratio": 9.285866173120395
+        },
+        {
+          "selector": ".usage-caption",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": "#context-free-label",
+          "ratio": 9.285866173120395
+        },
+        {
+          "selector": "#toggle-agents",
+          "ratio": 9.285866173120395
+        },
+        {
+          "selector": ".icon-btn",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": ".agent-copy > span",
+          "ratio": 9.285866173120395
+        }
+      ],
+      "aligned": true,
+      "font": "\"Google Sans Flex\", \"Google Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif"
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "scroll": 1024,
+      "contrasts": [
+        {
+          "selector": "#companion-state",
+          "ratio": 17.63304208116781
+        },
+        {
+          "selector": "#companion-detail",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": ".metric-caption",
+          "ratio": 5.09781123095597
+        },
+        {
+          "selector": "#time-title",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": "#context-max-label",
+          "ratio": 9.285866173120395
+        },
+        {
+          "selector": ".usage-caption",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": "#context-free-label",
+          "ratio": 9.285866173120395
+        },
+        {
+          "selector": "#toggle-agents",
+          "ratio": 9.285866173120395
+        },
+        {
+          "selector": ".icon-btn",
+          "ratio": 8.820343335380691
+        },
+        {
+          "selector": ".agent-copy > span",
+          "ratio": 9.285866173120395
+        }
+      ],
+      "aligned": true,
+      "font": "\"Google Sans Flex\", \"Google Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "limits": [
+    "Headless browser; no interaction with the active Antigravity window",
+    "Telemetry mocked; no claim about live provider quota accuracy"
+  ]
+}

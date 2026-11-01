@@ -88,3 +88,17 @@ Conforme auditoria do executável `language_server.exe agentapi --help`:
 - **Zero Bloqueio:** Os hooks respondem `{}` imediatamente no stdout para `PreToolUse` e `Stop`. Se o servidor sidecar estiver inacessível ou o timeout de 250ms expirar, o coletor silencia e permite a continuidade da sessão do Antigravity sem interrupção.
 - **Gravação Atômica:** Estados de atividade são gravados com sufixo `.tmp.<pid>` e renomeados atomicamente, prevenindo corrupção em chamadas concorrentes de múltiplos hooks.
 - **Assets Embutidos:** A fonte Google Sans Flex está embutida diretamente no `ui.html` como data URI WOFF2, eliminando qualquer dependência de CDNs ou acesso externo.
+
+
+## Correção visual do runtime — 2026-11-01
+
+- O preload do SDK Antigravity aplica cores e fonte diretamente ao body e injeta variáveis de tema no elemento raiz. As variáveis genéricas do HUD colidiam com as do host, deixando textos sem contraste. O HUD agora usa tokens próprios com prefixo --hud- e define cores e fonte no contêiner .dashboard.
+- A atualização dos subagentes selecionava o primeiro span da linha, que era o avatar. O texto da tarefa substituía o mascote e vazava para fora da linha. Os seletores agora apontam para .agent-copy; textos longos quebram dentro da coluna e a barra de controles pode ocupar mais de uma linha.
+- O SDK continua responsável pela ponte com o host. O listener duplicado de tema foi removido do HUD. O seletor claro/escuro e a pausa de animações continuam disponíveis.
+- Os valores acessíveis dos indicadores de consumo e contexto acompanham os valores exibidos. Retorno de chamada de subagente não é apresentado como prova de sucesso.
+- Teste de regressão: test/ui.test.cjs usa o preload real instalado, injeta cores do host e simula telemetria, sem acessar conversas reais. Confere avatar/tarefa, contraste mínimo de 4,5:1, ausência de sobreposição e rolagem horizontal, 0/1/6 subagentes, recolher/expandir, cancelamento não suportado e movimento reduzido. São cinco larguras (320, 390, 472, 680 e 1024 px), nos dois temas. A suíte de integração existente também passou.
+- Prévia fiel com dados de demonstração: propostas/correcao-runtime-2026-11-01/index.html. Capturas e verificacao.json ficam na mesma pasta.
+- Limites: browser headless com o preload real; a janela aberta do Antigravity não foi controlada. A precisão das cotas e dos estados vindos do servidor não foi validada com uma sessão real nesta correção. O cancelamento direto de subagentes permanece não suportado.
+- Instalação: atualizar somente sidecars/usage_hud/ui.html na cópia local do plugin, preservando o original e comparando o hash. O servidor lê esse arquivo a cada requisição; fechar e reabrir a aba do HUD carrega a correção sem encerrar o Antigravity.
+
+Aplicação local conferida em 2026-11-01: C:\Users\aliso\.gemini\config\plugins\usage-hud\sidecars\usage_hud\ui.html. O servidor ativo entregou exatamente o HTML instalado, conferido por SHA256. Original e manifesto preservados em E:\Users\aliso\Documents\_backup_original\agy-hud-runtime-2026-11-01-31ac20f5\. A aba já aberta ainda precisa ser reaberta por Bali.

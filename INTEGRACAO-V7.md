@@ -160,3 +160,5 @@ Aplicação local conferida em 2026-11-01: %USERPROFILE%\.gemini\config\plugins\
 - sync.bat usa USERPROFILE em vez de um nome de usuário fixo e também copia a licença MIT, os avisos de terceiros e as licenças das fontes.
 - A release v1.0.0 acompanha a versão 1.0.0 de plugin.json. O pacote de runtime exclui .git, .worktrees, propostas, capturas de desenvolvimento e testes.
 - O histórico Git contém a evolução original. Não foram inventadas datas ou versões históricas nem reescritos os commits de criação.
+
+Sparky é o nome confirmado por Bali para o mascote em 2026-11-01. A capa usa a mesma estrelinha com olhos do runtime, em assets/sparky.svg; o nome também identifica o mascote para tecnologias assistivas no painel.

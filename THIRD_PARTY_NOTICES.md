@@ -14,7 +14,7 @@ A fonte não é relicenciada sob MIT.
 
 ## Símbolo Gemini e nomes Google
 
-O mascote e as propostas preservadas usam o símbolo colorido do Gemini como recurso gráfico de origem Google, com camadas de expressão e animação implementadas pelo projeto.
+Sparky é o nome do mascote deste projeto. Ele e as propostas preservadas usam o símbolo colorido do Gemini como recurso gráfico de origem Google, com camadas de expressão e animação implementadas pelo projeto.
 
 - Recurso de referência: [símbolo Gemini hospedado pelo Google](https://www.gstatic.com/lamda/images/gemini_sparkle_4g_512_lt_f94943af3be039176192d.png).
 - Referência de marca: [Google Brand Resource Center](https://about.google/brand-resource-center/).

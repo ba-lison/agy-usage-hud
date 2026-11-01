@@ -1,6 +1,11 @@
 {
   "realAntigravityPreload": true,
   "demoData": true,
+  "clipboardMocked": true,
+  "copyIndividualAndAll": true,
+  "clipboardDenialFallback": true,
+  "stopEndpointCalls": 0,
+  "matchingMetricBackgrounds": true,
   "checks": [
     {
       "theme": "dark",
@@ -25,7 +30,7 @@
         },
         {
           "selector": "#context-max-label",
-          "ratio": 11.748332242654985
+          "ratio": 10.629622722405248
         },
         {
           "selector": ".usage-caption",
@@ -33,7 +38,7 @@
         },
         {
           "selector": "#context-free-label",
-          "ratio": 11.748332242654985
+          "ratio": 10.629622722405248
         },
         {
           "selector": "#toggle-agents",
@@ -74,7 +79,7 @@
         },
         {
           "selector": "#context-max-label",
-          "ratio": 11.748332242654985
+          "ratio": 10.629622722405248
         },
         {
           "selector": ".usage-caption",
@@ -82,7 +87,7 @@
         },
         {
           "selector": "#context-free-label",
-          "ratio": 11.748332242654985
+          "ratio": 10.629622722405248
         },
         {
           "selector": "#toggle-agents",
@@ -123,7 +128,7 @@
         },
         {
           "selector": "#context-max-label",
-          "ratio": 11.748332242654985
+          "ratio": 10.629622722405248
         },
         {
           "selector": ".usage-caption",
@@ -131,7 +136,7 @@
         },
         {
           "selector": "#context-free-label",
-          "ratio": 11.748332242654985
+          "ratio": 10.629622722405248
         },
         {
           "selector": "#toggle-agents",
@@ -172,7 +177,7 @@
         },
         {
           "selector": "#context-max-label",
-          "ratio": 11.748332242654985
+          "ratio": 10.629622722405248
         },
         {
           "selector": ".usage-caption",
@@ -180,7 +185,7 @@
         },
         {
           "selector": "#context-free-label",
-          "ratio": 11.748332242654985
+          "ratio": 10.629622722405248
         },
         {
           "selector": "#toggle-agents",
@@ -221,7 +226,7 @@
         },
         {
           "selector": "#context-max-label",
-          "ratio": 11.748332242654985
+          "ratio": 10.629622722405248
         },
         {
           "selector": ".usage-caption",
@@ -229,7 +234,7 @@
         },
         {
           "selector": "#context-free-label",
-          "ratio": 11.748332242654985
+          "ratio": 10.629622722405248
         },
         {
           "selector": "#toggle-agents",
@@ -270,7 +275,7 @@
         },
         {
           "selector": "#context-max-label",
-          "ratio": 9.285866173120395
+          "ratio": 8.820343335380691
         },
         {
           "selector": ".usage-caption",
@@ -278,7 +283,7 @@
         },
         {
           "selector": "#context-free-label",
-          "ratio": 9.285866173120395
+          "ratio": 8.820343335380691
         },
         {
           "selector": "#toggle-agents",
@@ -319,7 +324,7 @@
         },
         {
           "selector": "#context-max-label",
-          "ratio": 9.285866173120395
+          "ratio": 8.820343335380691
         },
         {
           "selector": ".usage-caption",
@@ -327,7 +332,7 @@
         },
         {
           "selector": "#context-free-label",
-          "ratio": 9.285866173120395
+          "ratio": 8.820343335380691
         },
         {
           "selector": "#toggle-agents",
@@ -368,7 +373,7 @@
         },
         {
           "selector": "#context-max-label",
-          "ratio": 9.285866173120395
+          "ratio": 8.820343335380691
         },
         {
           "selector": ".usage-caption",
@@ -376,7 +381,7 @@
         },
         {
           "selector": "#context-free-label",
-          "ratio": 9.285866173120395
+          "ratio": 8.820343335380691
         },
         {
           "selector": "#toggle-agents",
@@ -417,7 +422,7 @@
         },
         {
           "selector": "#context-max-label",
-          "ratio": 9.285866173120395
+          "ratio": 8.820343335380691
         },
         {
           "selector": ".usage-caption",
@@ -425,7 +430,7 @@
         },
         {
           "selector": "#context-free-label",
-          "ratio": 9.285866173120395
+          "ratio": 8.820343335380691
         },
         {
           "selector": "#toggle-agents",
@@ -466,7 +471,7 @@
         },
         {
           "selector": "#context-max-label",
-          "ratio": 9.285866173120395
+          "ratio": 8.820343335380691
         },
         {
           "selector": ".usage-caption",
@@ -474,7 +479,7 @@
         },
         {
           "selector": "#context-free-label",
-          "ratio": 9.285866173120395
+          "ratio": 8.820343335380691
         },
         {
           "selector": "#toggle-agents",
@@ -497,6 +502,7 @@
   "external": [],
   "limits": [
     "Headless browser; no interaction with the active Antigravity window",
-    "Telemetry mocked; no claim about live provider quota accuracy"
+    "Telemetry mocked; no claim about live provider quota accuracy",
+    "Stop requires pasting the copied request into the Antigravity chat"
   ]
 }

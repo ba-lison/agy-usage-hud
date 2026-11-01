@@ -321,7 +321,11 @@ p, h1, h2, dl, dd { margin: 0; }
   background: transparent;
   color: var(--hud-faint);
 }
-.stop-agent svg { width: 14px; height: 14px; fill: currentColor; }
+.stop-agent svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+.stop-request { padding: 10px 12px; border-top: 1px solid var(--hud-outline-soft); font-size: 11px; color: var(--hud-muted); }
+.stop-request textarea { display: block; width: 100%; margin: 8px 0; padding: 8px; resize: vertical; border: 1px solid var(--hud-outline); border-radius: 6px; background: var(--hud-surface); color: var(--hud-ink); font: inherit; }
+.stop-request button { padding: 4px 8px; border: 1px solid var(--hud-outline); border-radius: 6px; background: var(--hud-surface); color: var(--hud-ink); }
+.stop-request textarea:focus-visible { outline: 2px solid var(--hud-blue); outline-offset: 2px; }
 
 /* Metrics Grid */
 .metrics-grid {
@@ -424,7 +428,7 @@ p, h1, h2, dl, dd { margin: 0; }
 
 .context-panel {
   border: 1px solid var(--hud-outline);
-  background: var(--hud-surface);
+  background: var(--hud-surface-low);
   display: flex;
   flex-direction: column;
 }
@@ -524,9 +528,14 @@ p, h1, h2, dl, dd { margin: 0; }
       <div class="agents-toolbar">
         <h2 id="agents-summary">Subagentes</h2>
         <button type="button" id="toggle-agents" aria-controls="agent-list" aria-expanded="true">Ocultar</button>
-        <button type="button" id="stop-agents" aria-label="Parar todos os subagentes">Parar todos</button>
+        <button type="button" id="stop-agents" aria-label="Copiar pedido de parada de todos os subagentes" title="Copiar um pedido para colar no chat do Antigravity">Parar pelo chat</button>
       </div>
       <ul id="agent-list" class="agent-list" aria-label="Subagentes ativos"></ul>
+      <div id="stop-request" class="stop-request" hidden>
+        <p>A cópia automática não está disponível. Copie o pedido abaixo e cole no chat do Antigravity.</p>
+        <textarea id="stop-request-text" rows="3" readonly aria-label="Pedido de parada para copiar"></textarea>
+        <button type="button" id="close-stop-request">Fechar pedido</button>
+      </div>
     </section>
 
     <div class="metrics-grid">
@@ -695,6 +704,7 @@ window.fetch = async function(url) { return {ok: true, json: async function() { 
       if (!activeSubagents || activeSubagents.length === 0) {
         section.hidden = true;
         list.replaceChildren();
+        document.getElementById('stop-request').hidden = true;
         return;
       }
 
@@ -719,7 +729,7 @@ window.fetch = async function(url) { return {ok: true, json: async function() { 
         if (!row) {
           row = document.createElement('li');
           row.dataset.agentId = String(agent.id);
-          row.innerHTML = '<span class="agent-avatar"></span><div class="agent-copy"><strong></strong><span></span><small></small></div><button type="button" class="stop-agent" title="Parar subagente"><svg viewBox="0 0 16 16"><rect x="4" y="4" width="8" height="8" rx="1"/></svg></button>';
+          row.innerHTML = '<span class="agent-avatar"></span><div class="agent-copy"><strong></strong><span></span><small></small></div><button type="button" class="stop-agent" title="Copiar pedido de parada deste subagente" aria-label="Copiar pedido de parada deste subagente"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5" y="5" width="8" height="8" rx="1"/><path d="M3 10H2V2h8v1"/></svg></button>';
           list.append(row);
         } else {
           existingRows.delete(String(agent.id));
@@ -746,20 +756,26 @@ window.fetch = async function(url) { return {ok: true, json: async function() { 
       }
     }
 
-    async function handleStopSubagent(agentId = null) {
-      if (!currentConversationId) return;
+    async function copyStopRequest(agentId = null) {
+      const running = activeSubagents.filter(agent => agent.status === 'running');
+      const target = agentId === null ? running : running.filter(agent => String(agent.id) === agentId);
+      if (target.length === 0) {
+        showToast('Não há subagentes ativos nesse pedido.');
+        return;
+      }
+      const scope = agentId === null ? 'todos os subagentes ativos desta conversa' :
+        'apenas este subagente da conversa atual: ' + JSON.stringify({ id: target[0].id, nome: target[0].name || 'Subagente' });
+      const request = 'Interrompa ' + scope + '. Use manage_subagents, se disponível, e confirme quais foram interrompidos. Não encerre o aplicativo nem processos externos.';
+      document.getElementById('stop-request').hidden = true;
       try {
-        const res = await fetch('/api/subagents/stop', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ conversationId: currentConversationId, agentId })
-        });
-        const data = await res.json();
-        if (data.message) {
-          showToast(data.message);
-        }
-      } catch (err) {
-        showToast('Não foi possível enviar a solicitação ao sidecar.');
+        await navigator.clipboard.writeText(request);
+        showToast('Pedido copiado. Cole no chat do Antigravity para solicitar a parada.');
+      } catch {
+        document.getElementById('stop-request').hidden = false;
+        const field = document.getElementById('stop-request-text');
+        field.value = request;
+        field.focus();
+        field.select();
       }
     }
 
@@ -962,13 +978,18 @@ window.fetch = async function(url) { return {ok: true, json: async function() { 
       });
 
       document.getElementById('stop-agents').addEventListener('click', () => {
-        handleStopSubagent(null);
+        copyStopRequest(null);
+      });
+
+      document.getElementById('close-stop-request').addEventListener('click', () => {
+        document.getElementById('stop-request').hidden = true;
+        document.getElementById('stop-agents').focus();
       });
 
       document.getElementById('agent-list').addEventListener('click', e => {
         const btn = e.target.closest('.stop-agent');
         if (btn && btn.dataset.agentId) {
-          handleStopSubagent(btn.dataset.agentId);
+          copyStopRequest(btn.dataset.agentId);
         }
       });
 

@@ -102,3 +102,11 @@ Conforme auditoria do executável `language_server.exe agentapi --help`:
 - Instalação: atualizar somente sidecars/usage_hud/ui.html na cópia local do plugin, preservando o original e comparando o hash. O servidor lê esse arquivo a cada requisição; fechar e reabrir a aba do HUD carrega a correção sem encerrar o Antigravity.
 
 Aplicação local conferida em 2026-11-01: C:\Users\aliso\.gemini\config\plugins\usage-hud\sidecars\usage_hud\ui.html. O servidor ativo entregou exatamente o HTML instalado, conferido por SHA256. Original e manifesto preservados em E:\Users\aliso\Documents\_backup_original\agy-hud-runtime-2026-11-01-31ac20f5\. A aba já aberta ainda precisa ser reaberta por Bali.
+
+
+### Parada pelo chat e cores iguais — complemento de 2026-11-01
+
+- A interface deixou de chamar a rota de cancelamento não suportada. O controle geral agora diz "Parar pelo chat"; os ícones individuais copiam um pedido direcionado ao subagente escolhido.
+- O HUD copia a instrução para o usuário colar no chat do Antigravity. Se a área de transferência estiver bloqueada ou indisponível, exibe o pedido selecionado para cópia manual. A cópia não envia mensagens, não interrompe processos e não muda o status do subagente.
+- O fundo do card Contexto agora usa exatamente o mesmo token do card Janela de 5 horas (--hud-surface-low), nos dois temas.
+- A regressão visual confere igualdade exata dos fundos, cópia individual e geral, alternativa manual e ausência de chamadas ao endpoint não suportado. A área de transferência é simulada nos testes, preservando o clipboard real de Bali.

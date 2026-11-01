@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/capa-dark.png">
-  <img src="assets/capa.png" alt="AGY UsageHUD — atividade, contexto e janela de 5 horas no Antigravity" width="1280">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/capa-sparky-dark.png">
+  <img src="assets/capa-sparky.png" alt="AGY UsageHUD com Sparky — atividade, contexto e janela de 5 horas no Antigravity" width="1280">
 </picture>
 
 # AGY UsageHUD
@@ -114,11 +114,17 @@ Google Sans Flex mantém sua licença OFL. O símbolo Gemini e os nomes de produ
 
 ## Autoria e licença
 
-Criado por Alison Cruz / **BALISON**.
+Desenvolvido por [Alison Cruz](https://github.com/ba-lison) · **BALISON**.
 
 Distribuído sob a [licença MIT](LICENSE).
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/balison-dark.svg">
-  <img src="assets/balison.svg" alt="BALISON — Tecnologia com traço humano" width="280">
-</picture>
+---
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/assinatura-alison-balison-dark.svg">
+    <img src="assets/assinatura-alison-balison.svg" alt="Alison · BALISON" width="280">
+  </picture>
+  <br>
+  <sub>Tecnologia com traço humano.</sub>
+</p>

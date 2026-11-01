@@ -13,6 +13,7 @@ REM Copia apenas os arquivos essenciais de runtime e plugins
 copy /Y "%SRC%\plugin.json" "%DEST%\plugin.json" >nul
 copy /Y "%SRC%\hooks.json" "%DEST%\hooks.json" >nul
 if exist "%SRC%\README.md" copy /Y "%SRC%\README.md" "%DEST%\README.md" >nul
+if exist "%SRC%\INTEGRACAO-V7.md" copy /Y "%SRC%\INTEGRACAO-V7.md" "%DEST%\INTEGRACAO-V7.md" >nul
 
 REM Copia sidecars
 robocopy "%SRC%\sidecars\usage_hud" "%DEST%\sidecars\usage_hud" /E /XF *.tmp *.log /NDL /NFL /NJH /NJS >nul

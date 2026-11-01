@@ -310,23 +310,6 @@ p, h1, h2, dl, dd { margin: 0; }
 .agent-copy strong { display: block; font-weight: 500; font-size: 11.5px; }
 .agent-copy span { display: block; font-size: 11px; color: var(--hud-muted); }
 .agent-copy small { display: block; font-size: 10px; color: var(--hud-faint); margin-top: 1px; }
-.stop-agent {
-  width: 28px;
-  height: 28px;
-  flex: none;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--hud-outline);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--hud-faint);
-}
-.stop-agent svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
-.stop-request { padding: 10px 12px; border-top: 1px solid var(--hud-outline-soft); font-size: 11px; color: var(--hud-muted); }
-.stop-request textarea { display: block; width: 100%; margin: 8px 0; padding: 8px; resize: vertical; border: 1px solid var(--hud-outline); border-radius: 6px; background: var(--hud-surface); color: var(--hud-ink); font: inherit; }
-.stop-request button { padding: 4px 8px; border: 1px solid var(--hud-outline); border-radius: 6px; background: var(--hud-surface); color: var(--hud-ink); }
-.stop-request textarea:focus-visible { outline: 2px solid var(--hud-blue); outline-offset: 2px; }
-
 /* Metrics Grid */
 .metrics-grid {
   display: grid;
@@ -466,22 +449,6 @@ p, h1, h2, dl, dd { margin: 0; }
 }
 .context-footer strong { font-weight: 450; color: var(--hud-muted); }
 
-/* Toast notice */
-.toast-notice {
-  position: fixed;
-  bottom: 12px;
-  left: 14px;
-  right: 14px;
-  padding: 8px 12px;
-  background: var(--hud-surface-high);
-  border: 1px solid var(--hud-outline);
-  border-radius: 8px;
-  font-size: 11px;
-  color: var(--hud-ink);
-  display: none;
-  z-index: 100;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
   </style>
 </head>
 <body>
@@ -509,7 +476,7 @@ p, h1, h2, dl, dd { margin: 0; }
           <svg class="icon sun"><use href="#i-sun"/></svg>
           <svg class="icon moon"><use href="#i-moon"/></svg>
         </button>
-        <button type="button" class="icon-btn" id="reload-btn" aria-label="Recarregar dados" title="Atualizar dados agora">
+        <button type="button" class="icon-btn" id="reload-btn" aria-label="Atualizar dados" title="Atualizar dados agora">
           <svg class="icon"><use href="#i-reload"/></svg>
         </button>
       </div>
@@ -528,14 +495,8 @@ p, h1, h2, dl, dd { margin: 0; }
       <div class="agents-toolbar">
         <h2 id="agents-summary">Subagentes</h2>
         <button type="button" id="toggle-agents" aria-controls="agent-list" aria-expanded="true">Ocultar</button>
-        <button type="button" id="stop-agents" aria-label="Copiar pedido de parada de todos os subagentes" title="Copiar um pedido para colar no chat do Antigravity">Parar pelo chat</button>
       </div>
       <ul id="agent-list" class="agent-list" aria-label="Subagentes ativos"></ul>
-      <div id="stop-request" class="stop-request" hidden>
-        <p>A cópia automática não está disponível. Copie o pedido abaixo e cole no chat do Antigravity.</p>
-        <textarea id="stop-request-text" rows="3" readonly aria-label="Pedido de parada para copiar"></textarea>
-        <button type="button" id="close-stop-request">Fechar pedido</button>
-      </div>
     </section>
 
     <div class="metrics-grid">
@@ -585,7 +546,6 @@ p, h1, h2, dl, dd { margin: 0; }
       </section>
     </div>
 
-    <div id="toast-notice" class="toast-notice" role="alert"></div>
   </div>
 
   <script>
@@ -622,7 +582,6 @@ window.fetch = async function(url) { return {ok: true, json: async function() { 
     let agentsCollapsed = false;
     let currentConversationId = null;
     let activeSubagents = [];
-    let toastTimer = null;
 
     async function preparePixel() {
       if (!GOOGLE_ASSET) return;
@@ -687,24 +646,14 @@ window.fetch = async function(url) { return {ok: true, json: async function() { 
       return `<span class="mascot" data-state="${kind}" data-shape="retro"${still ? ' data-still="true"' : ''} style="width:${size}px;height:${size}px" aria-hidden="true"><svg viewBox="0 0 120 124" xmlns="http://www.w3.org/2000/svg" class="pixel-sprite"><ellipse class="floor" cx="60" cy="117" rx="27" ry="3"/><g class="body"><g class="float-body"><image x="7" y="5" width="106" height="106" href="${pixelAsset}" style="image-rendering:pixelated"/>${frameImages}<g class="face"${gaze ? ` transform="${gaze}"` : ''}><g class="glance"><g class="eyes ${still || kind === 'ended' ? '' : 'blink'}">${eyes}</g></g>${glasses}</g></g></g>${glyph}${teammates}</svg></span>`;
     }
 
-    function showToast(msg) {
-      const t = document.getElementById('toast-notice');
-      t.textContent = msg;
-      t.style.display = 'block';
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => { t.style.display = 'none'; }, 4500);
-    }
-
     function syncSubagentsList() {
       const section = document.getElementById('subagents');
       const list = document.getElementById('agent-list');
       const toggle = document.getElementById('toggle-agents');
-      const stopAll = document.getElementById('stop-agents');
 
       if (!activeSubagents || activeSubagents.length === 0) {
         section.hidden = true;
         list.replaceChildren();
-        document.getElementById('stop-request').hidden = true;
         return;
       }
 
@@ -714,7 +663,6 @@ window.fetch = async function(url) { return {ok: true, json: async function() { 
       toggle.textContent = agentsCollapsed ? 'Mostrar' : 'Ocultar';
       toggle.setAttribute('aria-expanded', String(!agentsCollapsed));
       list.hidden = agentsCollapsed;
-      stopAll.disabled = runningCount === 0;
 
       // Retain DOM rows to preserve focus and smooth mascot animations
       const existingRows = new Map();
@@ -729,7 +677,7 @@ window.fetch = async function(url) { return {ok: true, json: async function() { 
         if (!row) {
           row = document.createElement('li');
           row.dataset.agentId = String(agent.id);
-          row.innerHTML = '<span class="agent-avatar"></span><div class="agent-copy"><strong></strong><span></span><small></small></div><button type="button" class="stop-agent" title="Copiar pedido de parada deste subagente" aria-label="Copiar pedido de parada deste subagente"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5" y="5" width="8" height="8" rx="1"/><path d="M3 10H2V2h8v1"/></svg></button>';
+          row.innerHTML = '<span class="agent-avatar"></span><div class="agent-copy"><strong></strong><span></span><small></small></div>';
           list.append(row);
         } else {
           existingRows.delete(String(agent.id));
@@ -745,37 +693,11 @@ window.fetch = async function(url) { return {ok: true, json: async function() { 
         row.querySelector('.agent-copy > span').textContent = isRunning ? (agent.task || 'Processando') : 'Chamada retornou';
         row.querySelector('.agent-copy > small').textContent = isRunning ? (agent.detail || 'Ativo') : 'Sem execução ativa';
 
-        const btn = row.querySelector('.stop-agent');
-        btn.dataset.agentId = String(agent.id);
-        btn.disabled = !isRunning;
       }
 
       // Remove deleted agents
       for (const [_, oldRow] of existingRows.entries()) {
         oldRow.remove();
-      }
-    }
-
-    async function copyStopRequest(agentId = null) {
-      const running = activeSubagents.filter(agent => agent.status === 'running');
-      const target = agentId === null ? running : running.filter(agent => String(agent.id) === agentId);
-      if (target.length === 0) {
-        showToast('Não há subagentes ativos nesse pedido.');
-        return;
-      }
-      const scope = agentId === null ? 'todos os subagentes ativos desta conversa' :
-        'apenas este subagente da conversa atual: ' + JSON.stringify({ id: target[0].id, nome: target[0].name || 'Subagente' });
-      const request = 'Interrompa ' + scope + '. Use manage_subagents, se disponível, e confirme quais foram interrompidos. Não encerre o aplicativo nem processos externos.';
-      document.getElementById('stop-request').hidden = true;
-      try {
-        await navigator.clipboard.writeText(request);
-        showToast('Pedido copiado. Cole no chat do Antigravity para solicitar a parada.');
-      } catch {
-        document.getElementById('stop-request').hidden = false;
-        const field = document.getElementById('stop-request-text');
-        field.value = request;
-        field.focus();
-        field.select();
       }
     }
 
@@ -975,22 +897,6 @@ window.fetch = async function(url) { return {ok: true, json: async function() { 
       document.getElementById('toggle-agents').addEventListener('click', () => {
         agentsCollapsed = !agentsCollapsed;
         syncSubagentsList();
-      });
-
-      document.getElementById('stop-agents').addEventListener('click', () => {
-        copyStopRequest(null);
-      });
-
-      document.getElementById('close-stop-request').addEventListener('click', () => {
-        document.getElementById('stop-request').hidden = true;
-        document.getElementById('stop-agents').focus();
-      });
-
-      document.getElementById('agent-list').addEventListener('click', e => {
-        const btn = e.target.closest('.stop-agent');
-        if (btn && btn.dataset.agentId) {
-          copyStopRequest(btn.dataset.agentId);
-        }
       });
 
       // 4. Initial Theme & Motion

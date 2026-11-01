@@ -13,7 +13,13 @@
 
 </div>
 
-O **AGY - UsageHUD** é uma extensão/plugin local para o Google Antigravity. Ele monitora a sessão atual da IDE em tempo real através de um sidecar leve, exibindo modelo em uso, taxa de contexto, consumo na janela de 5 horas e atalho de handoff em um painel vertical integrado.
+O **AGY - UsageHUD** é uma extensão/plugin local para o Google Antigravity. Ele monitora a sessão atual da IDE em tempo real através de um sidecar leve, exibindo atividade da sessão, subagentes, capacidade de contexto e consumo na janela de 5 horas em um painel vertical integrado.
+
+## Abrir e atualizar o painel
+
+O processo está em [Como carregar a atualização no Antigravity](INTEGRACAO-V7.md#carregar-atualizacao): pasta instalada, atualização dos arquivos, reabertura da página, diferença entre atualizar dados e atualizar a interface, fontes oficiais e limites do teste.
+
+A lista de subagentes é somente de acompanhamento, com Ocultar/Mostrar. Não há controle de parada nem cópia de pedido.
 
 ## Estrutura do Plugin
 

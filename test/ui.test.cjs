@@ -76,9 +76,8 @@ let activity = { kind: 'agents', label: 'Coordenando subagentes', detail: '1 de 
           const row = document.querySelector('.agent-list li').getBoundingClientRect();
           const avatar = document.querySelector('.agent-avatar').getBoundingClientRect();
           const copy = document.querySelector('.agent-copy').getBoundingClientRect();
-          const stop = document.querySelector('.stop-agent').getBoundingClientRect();
           return { width: innerWidth, scroll: document.documentElement.scrollWidth, contrasts,
-            aligned: avatar.right <= copy.left && copy.right <= stop.left && stop.right <= row.right,
+            aligned: avatar.right <= copy.left && copy.right <= row.right,
             font: getComputedStyle(document.querySelector('.dashboard')).fontFamily };
         });
         assert.equal(result.scroll, width, `Horizontal overflow at ${width}px (${theme})`);
@@ -95,24 +94,10 @@ let activity = { kind: 'agents', label: 'Coordenando subagentes', detail: '1 de 
     assert.equal(await page.locator('#agent-list').isVisible(), false);
     await page.locator('#toggle-agents').click();
     assert.equal(await page.locator('.agent-avatar .mascot').count(), 1);
-    // Fake clipboard: no writes to the user's system clipboard during verification.
-    await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { window.copiedStopRequest = text; } } }));
-    await page.locator('.stop-agent').click();
-    await page.locator('#toast-notice').waitFor();
-    assert.match(await page.locator('#toast-notice').textContent(), /Pedido copiado/);
-    assert.match(await page.evaluate(() => window.copiedStopRequest), /demo-agent/);
-    assert.match(await page.evaluate(() => window.copiedStopRequest), /HUD Fixer/);
-    await page.locator('#stop-agents').click();
-    assert.match(await page.evaluate(() => window.copiedStopRequest), /todos os subagentes ativos desta conversa/);
-    assert.equal(await page.locator('#agent-list li').getAttribute('data-status'), 'running', 'Copying a request cannot fake a stopped task');
-    await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw new Error('Clipboard denied'); } } }));
-    await page.locator('.stop-agent').click();
-    assert.equal(await page.locator('#stop-request').isVisible(), true);
-    assert.match(await page.locator('#stop-request-text').inputValue(), /demo-agent/);
-    assert.equal(await page.locator('#stop-request-text').evaluate(el => el.selectionEnd - el.selectionStart), (await page.locator('#stop-request-text').inputValue()).length);
-    await page.locator('#close-stop-request').click();
-    assert.equal(await page.locator('#stop-request').isVisible(), false);
-    assert.equal(stopEndpointCalls, 0, 'The UI must not call the unsupported stop endpoint');
+    assert.equal(await page.locator('#stop-agents,.stop-agent,#stop-request,#stop-request-text').count(), 0);
+    assert.equal(await page.locator('#agent-list button').count(), 0);
+    assert.ok(!/navigator\.clipboard|copyStopRequest|Parar pelo chat/.test(ui));
+    assert.equal(stopEndpointCalls, 0, 'Read-only agent tracking must not call the stop endpoint');
 
     await page.setViewportSize({ width: 320, height: 862 });
     await page.evaluate(sample => {
@@ -127,7 +112,7 @@ let activity = { kind: 'agents', label: 'Coordenando subagentes', detail: '1 de 
     assert.equal(await page.locator('#companion-slot .float-body').evaluate(el => getComputedStyle(el).animationName), 'none');
     assert.deepEqual(errors, []);
     assert.deepEqual(external, []);
-    fs.writeFileSync(path.join(output, 'verificacao.json'), JSON.stringify({ realAntigravityPreload: true, demoData: true, clipboardMocked: true, copyIndividualAndAll: true, clipboardDenialFallback: true, stopEndpointCalls, matchingMetricBackgrounds: true, checks, errors, external, limits: ['Headless browser; no interaction with the active Antigravity window', 'Telemetry mocked; no claim about live provider quota accuracy', 'Stop requires pasting the copied request into the Antigravity chat'] }, null, 2));
+    fs.writeFileSync(path.join(output, 'verificacao.json'), JSON.stringify({ realAntigravityPreload: true, demoData: true, stopAndCopyControlsAbsent: true, stopEndpointCalls, matchingMetricBackgrounds: true, checks, errors, external, limits: ['Headless browser; no interaction with the active Antigravity window', 'Telemetry mocked; no claim about live provider quota accuracy', 'Agent tracking only; no cancellation or clipboard action'] }, null, 2));
     console.log(JSON.stringify({ success: true, layouts: checks.length, avatarAndTaskPreserved: true, hostColorsIsolated: true, output }));
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

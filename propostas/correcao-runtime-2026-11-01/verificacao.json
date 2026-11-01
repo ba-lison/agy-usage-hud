@@ -1,9 +1,7 @@
 {
   "realAntigravityPreload": true,
   "demoData": true,
-  "clipboardMocked": true,
-  "copyIndividualAndAll": true,
-  "clipboardDenialFallback": true,
+  "stopAndCopyControlsAbsent": true,
   "stopEndpointCalls": 0,
   "matchingMetricBackgrounds": true,
   "checks": [
@@ -503,6 +501,6 @@
   "limits": [
     "Headless browser; no interaction with the active Antigravity window",
     "Telemetry mocked; no claim about live provider quota accuracy",
-    "Stop requires pasting the copied request into the Antigravity chat"
+    "Agent tracking only; no cancellation or clipboard action"
   ]
 }

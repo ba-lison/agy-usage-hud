@@ -3,3 +3,9 @@ node_modules/
 Thumbs.db
 *.log
 .worktrees/
+.env
+.env.*
+!.env.example
+server_info.json
+activity-state.json
+*.tmp

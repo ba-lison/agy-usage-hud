@@ -2,5 +2,5 @@
   "name": "usage-hud",
   "displayName": "AGY - UsageHUD",
   "version": "1.0.0",
-  "description": "Dashboard vertical em tempo real de modelo, cota de 5h e consumo de tokens."
+  "description": "Painel local para Antigravity: atividade da sessão, subagentes, contexto e janela de 5 horas."
 }

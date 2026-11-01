@@ -49,7 +49,7 @@ Um bloco de código com o texto exato para eu colar na sessão nova. Ele deve di
 Logo após criar o arquivo `handoff.md`, execute o script auxiliar via `run_command` passando o `<artifactDirectoryPath>` da conversa atual:
 
 ```powershell
-node "C:/Users/aliso/.gemini/config/plugins/usage-hud/scripts/copy-handoff.mjs" "<artifactDirectoryPath>"
+node "$env:USERPROFILE/.gemini/config/plugins/usage-hud/scripts/copy-handoff.mjs" "<artifactDirectoryPath>"
 ```
 
 Confirme de forma concisa para o usuário que o handoff está pronto no painel e já foi copiado para a área de transferência.

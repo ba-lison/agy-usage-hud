@@ -4,7 +4,7 @@
   "displayName": "AGY - UsageHUD",
   "version": "1.3.0",
   "description": "Painel local para Antigravity: contexto detalhado pelo Language Server, ferramentas MCP, subagentes com parada e cota do modelo sem número inventado.",
-  "logo": "assets/logo.svg",
+  "logo": "assets/logo.png",
   "author": {
     "name": "Alison Cruz / BALISON",
     "url": "https://github.com/ba-lison"

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import fs from 'node:fs'
+import http from 'node:http'
 import path from 'node:path'
 import os from 'node:os'
 import { fileURLToPath } from 'node:url'
@@ -369,5 +370,85 @@ console.log('7. Validando queda do Language Server (porta recusada, sem token)..
   }
 }
 console.log('   ✓ Language Server fora do ar: activity e stats respondem 200 pelo transcript.')
+
+// 8. Descoberta do Language Server: a porta mais nova do log pode estar morta
+//    (o app reinicia e deixa rastro), e o painel precisa achar a anterior viva.
+console.log('\n8. Validando descoberta do Language Server (porta nova morta, anterior viva)...')
+{
+  const serverPath = path.resolve(__dirname, '../sidecars/usage_hud/server.mjs')
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'agy-hud-ls-discovery-'))
+  const convId = 'conv-ls-discovery'
+  const logs = path.join(home, '.gemini', 'antigravity', 'brain', convId, '.system_generated', 'logs')
+  fs.mkdirSync(logs, { recursive: true })
+  fs.writeFileSync(path.join(logs, 'transcript.jsonl'), JSON.stringify({ type: 'PLANNER_RESPONSE', input_tokens: 1000, cache_read_tokens: 500, output_tokens: 20 }) + '\n')
+
+  const usage = { estimatedTokensUsed: 1500, maxContextTokens: 256000, tokenGroups: [{ name: 'Mensagens', numTokens: 900 }] }
+  const fakeLs = http.createServer((req, res) => {
+    if (req.method === 'GET' && req.url === '/') {
+      res.writeHead(200, { 'Content-Type': 'text/html' })
+      res.end('<html><script>window.__x = {"csrfToken":"teste-csrf"}</script></html>')
+      return
+    }
+    if (req.method === 'POST' && req.url.includes('StreamAgentStateUpdates')) {
+      let body = ''
+      req.on('data', chunk => (body += chunk))
+      req.on('end', () => {
+        const payload = Buffer.from(JSON.stringify({ update: { conversationId: convId, contextWindowUsage: usage } }))
+        const header = Buffer.from([0, (payload.length >>> 24) & 255, (payload.length >>> 16) & 255, (payload.length >>> 8) & 255, payload.length & 255])
+        res.writeHead(200, { 'Content-Type': 'application/connect+json' })
+        res.end(Buffer.concat([header, payload]))
+      })
+      return
+    }
+    res.writeHead(404)
+    res.end()
+  })
+  const livePort = await new Promise(resolve => fakeLs.listen(0, '127.0.0.1', () => resolve(fakeLs.address().port)))
+
+  // A porta viva vem antes no arquivo; a morte entra depois, como "mais nova".
+  const logDir = path.join(home, 'AppData', 'Antigravity', 'logs')
+  fs.mkdirSync(logDir, { recursive: true })
+  fs.writeFileSync(
+    path.join(logDir, 'language_server.log'),
+    [
+      `ERROR: logging before google.Init: I1114 10:00:00.000000 1 server.go:1131] Language server listening on random port at ${livePort} for HTTPS (gRPC)`,
+      `ERROR: logging before google.Init: I1114 10:00:00.001000 1 server.go:1139] Language server listening on random port at ${livePort} for HTTP`,
+      'ERROR: logging before google.Init: I1114 10:05:00.000000 1 server.go:1139] Language server listening on random port at 9 for HTTP',
+    ].join('\n') + '\n',
+  )
+
+  const env = { ...process.env, USERPROFILE: home, HOME: home, APPDATA: path.join(home, 'AppData'), ANTIGRAVITY_SIDECAR_WEB_PORT: '0', USAGE_HUD_NO_INFO: '1' }
+  delete env.ANTIGRAVITY_CSRF_TOKEN
+  delete env.ANTIGRAVITY_LS_ADDRESS
+  const sidecar = spawn(process.execPath, [serverPath], { env })
+  let output = ''
+  sidecar.stdout.on('data', chunk => (output += chunk))
+  sidecar.stderr.on('data', () => {})
+  const port = await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('sidecar não iniciou a tempo')), 8000)
+    sidecar.stdout.on('data', () => {
+      const match = /127\.0\.0\.1:(\d+)/.exec(output)
+      if (!match) return
+      clearTimeout(timer)
+      resolve(Number(match[1]))
+    })
+    sidecar.on('exit', code => { clearTimeout(timer); reject(new Error(`sidecar saiu com código ${code}`)) })
+  })
+
+  try {
+    const stats = await fetch(`http://127.0.0.1:${port}/api/stats?convId=${convId}`)
+    assert.equal(stats.status, 200)
+    const data = await stats.json()
+    assert.equal(data.context.source, 'language-server', 'usa o Language Server vivo, não a porta morta')
+    assert.equal(data.context.window, 256000, 'limite efetivo vem do Language Server')
+    assert.equal(data.context.tokens, 1500, 'tokens do Language Server')
+    assert.equal(data.context.pct, 1, 'percentual calculado sobre o limite real')
+  } finally {
+    sidecar.kill()
+    fakeLs.close()
+    fs.rmSync(home, { recursive: true, force: true })
+  }
+}
+console.log('   ✓ Porta morta é descartada e o limite vem do Language Server vivo.')
 
 console.log('\n🎉 Todos os testes de integração foram executados e passaram com 100% de sucesso!')

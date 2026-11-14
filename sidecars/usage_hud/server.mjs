@@ -34,24 +34,41 @@ const sessionModels = new Map()
 // existe quando o modelo informa remainingFraction; sem isso, o painel mostra
 // a renovação e nenhum número.
 const configsCache = { at: 0, models: [] }
-const portCache = { at: 0, port: 0 }
 const csrfCache = { at: 0, port: 0, token: null }
+const baseCache = { at: 0, base: '' }
 
-function languageServerPort() {
-  if (Date.now() - portCache.at < 10 * 60_000 && portCache.port) return portCache.port
+function languageServerLogPorts() {
+  const roam = process.env.APPDATA || path.join(homeDir(), 'AppData', 'Roaming')
   try {
-    const logFile = path.join(process.env.APPDATA || '', 'Antigravity', 'logs', 'language_server.log')
-    const log = fs.readFileSync(logFile, 'utf8')
-    const matches = [...log.matchAll(/listening on random port at (\d+) for HTTP/g)]
-    if (matches.length === 0) return 0
-    const port = parseInt(matches[matches.length - 1][1], 10)
-    if (!Number.isFinite(port) || port <= 0) return 0
-    portCache.port = port
-    portCache.at = Date.now()
-    return port
+    const log = fs.readFileSync(path.join(roam, 'Antigravity', 'logs', 'language_server.log'), 'utf8')
+    const ports = [...log.matchAll(/listening on random port at (\d+) for HTTP/g)]
+      .map(match => parseInt(match[1], 10))
+      .filter(port => Number.isFinite(port) && port > 0)
+    // A porta mais nova fica por último no log. O app sobe dois listeners (HTTPS
+    // e HTTP); só o HTTP responde ao CSRF, então a ordem importa.
+    return [...new Set(ports)].reverse()
   } catch {
-    return 0
+    return []
   }
+}
+
+// O app reinicia o Language Server com outra porta e pode deixar mais de um
+// vivo (app e CLI). Em vez de confiar em uma única porta, os candidatos são
+// testados e o que responde fica em cache até falhar.
+function languageServerCandidates() {
+  const list = []
+  const cached = baseCache.base
+  if (cached && Date.now() - baseCache.at < 5 * 60_000) list.push(cached)
+  const env = process.env.ANTIGRAVITY_LS_ADDRESS
+  if (env) list.push(env.replace(/\/$/, ''))
+  for (const port of languageServerLogPorts()) list.push(`http://127.0.0.1:${port}`)
+  return [...new Set(list)]
+}
+
+function forgetLanguageServer() {
+  baseCache.base = ''
+  baseCache.at = 0
+  csrfCache.at = 0
 }
 
 function request(port, pathname, { method = 'GET', headers = {}, body = null } = {}) {
@@ -86,9 +103,10 @@ async function csrfFor(port) {
 async function modelConfigs() {
   const now = Date.now()
   if (now - configsCache.at < 30_000) return configsCache.models
-  const port = languageServerPort()
-  if (!port) return configsCache.models
+  const base = await resolveLanguageServerBase()
+  if (!base) return configsCache.models
   try {
+    const port = Number(new URL(base).port) || 0
     const csrf = await csrfFor(port)
     if (!csrf) return configsCache.models
     const body = await request(port, '/exa.language_server_pb.LanguageServerService/GetUserStatus', {
@@ -103,8 +121,7 @@ async function modelConfigs() {
     }
   } catch {
     // Porta ou CSRF mudaram (o app reiniciou): relê o log na próxima consulta.
-    portCache.at = 0
-    csrfCache.at = 0
+    forgetLanguageServer()
   }
   return configsCache.models
 }
@@ -198,12 +215,10 @@ async function loadContextUsage(convId) {
   return value
 }
 
+// Percorre os candidatos porque o app pode ter mais de um Language Server vivo
+// e a porta muda a cada reinício; só troca a escolha quando um deles devolve o
+// contexto desta conversa.
 async function readContextUsage(convId) {
-  const base = languageServerBase()
-  if (!base) return null
-  const csrf = await languageServerCsrf(base)
-  if (!csrf) return null
-
   const request = {
     conversation_id: convId,
     subscriber_id: `usage-hud-${process.pid}-${Math.random().toString(36).slice(2)}`,
@@ -219,25 +234,39 @@ async function readContextUsage(convId) {
     payload,
   ])
 
-  const body = await connectFirstFrame(
-    base,
-    '/exa.language_server_pb.LanguageServerService/StreamAgentStateUpdates',
-    frame,
-    csrf,
-  )
-  const usage = JSON.parse(body)?.update?.contextWindowUsage
-  if (
-    usage &&
-    Number.isFinite(usage.estimatedTokensUsed) &&
-    Number.isFinite(usage.maxContextTokens) &&
-    usage.maxContextTokens > 0
-  ) {
-    return {
-      tokens: usage.estimatedTokensUsed,
-      window: usage.maxContextTokens,
-      groups: contextGroups(usage.tokenGroups),
+  for (const base of languageServerCandidates()) {
+    try {
+      const port = Number(new URL(base).port) || 0
+      if (!port) continue
+      const csrf = await csrfFor(port)
+      if (!csrf) continue
+
+      const body = await connectFirstFrame(
+        base,
+        '/exa.language_server_pb.LanguageServerService/StreamAgentStateUpdates',
+        frame,
+        csrf,
+      )
+      const usage = JSON.parse(body)?.update?.contextWindowUsage
+      if (
+        usage &&
+        Number.isFinite(usage.estimatedTokensUsed) &&
+        Number.isFinite(usage.maxContextTokens) &&
+        usage.maxContextTokens > 0
+      ) {
+        baseCache.base = base
+        baseCache.at = Date.now()
+        return {
+          tokens: usage.estimatedTokensUsed,
+          window: usage.maxContextTokens,
+          groups: contextGroups(usage.tokenGroups),
+        }
+      }
+    } catch {
+      continue
     }
   }
+  forgetLanguageServer()
   return null
 }
 
@@ -285,24 +314,31 @@ function readMcpServers() {
 
 /* ---------------- parar subagente ---------------- */
 
-function languageServerBase() {
-  const env = process.env.ANTIGRAVITY_LS_ADDRESS
-  if (env) return env.replace(/\/$/, '')
-  const port = languageServerPort()
-  return port ? `http://127.0.0.1:${port}` : null
+async function languageServerBase() {
+  return resolveLanguageServerBase()
+}
+
+async function resolveLanguageServerBase() {
+  for (const base of languageServerCandidates()) {
+    try {
+      const port = Number(new URL(base).port) || 0
+      if (!port) continue
+      const csrf = await csrfFor(port)
+      if (!csrf) continue
+      baseCache.base = base
+      baseCache.at = Date.now()
+      return base
+    } catch {
+      continue
+    }
+  }
+  forgetLanguageServer()
+  return null
 }
 
 async function languageServerCsrf(base) {
   if (process.env.ANTIGRAVITY_CSRF_TOKEN) return process.env.ANTIGRAVITY_CSRF_TOKEN
-  // O endereço explícito manda; o log do Language Server é só o fallback.
-  let port = 0
-  if (process.env.ANTIGRAVITY_LS_ADDRESS) {
-    try { port = Number(new URL(process.env.ANTIGRAVITY_LS_ADDRESS).port) || 0 } catch {}
-  }
-  if (!port) port = languageServerPort()
-  if (!port && base) {
-    try { port = Number(new URL(base).port) || 0 } catch {}
-  }
+  const port = Number(new URL(base).port) || 0
   return port ? csrfFor(port) : null
 }
 
@@ -340,7 +376,7 @@ function cancelBody(cascadeId) {
 }
 
 async function cancelCascade(cascadeId) {
-  const base = languageServerBase()
+  const base = await languageServerBase()
   if (!base) return { ok: false, message: 'Language Server não localizado' }
   const csrf = await languageServerCsrf(base)
   if (!csrf) return { ok: false, message: 'CSRF do Language Server não localizado' }

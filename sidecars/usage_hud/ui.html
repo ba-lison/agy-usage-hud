@@ -349,6 +349,32 @@ p, h1, h2, dl, dd { margin: 0; }
 }
 .agent-stop:hover:not(:disabled) { background: var(--hud-surface-high); color: var(--hud-ink); }
 .agent-stop .icon { width: 13px; height: 13px; }
+.agent-actions { display: flex; align-items: center; gap: 4px; flex: none; }
+.agent-stop-confirm {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 7px;
+  border: 1px solid var(--hud-outline);
+  background: var(--hud-surface);
+  color: var(--hud-muted);
+}
+.agent-stop-confirm:hover:not(:disabled) {
+  border-color: var(--hud-usage-red);
+  color: var(--hud-usage-red);
+}
+.agent-stop-cancel {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--hud-outline);
+  border-radius: 50%;
+  background: var(--hud-surface);
+  display: grid;
+  place-items: center;
+  color: var(--hud-muted);
+  font-size: 14px;
+  line-height: 1;
+}
+.agent-stop-cancel:hover:not(:disabled) { background: var(--hud-surface-high); color: var(--hud-ink); }
 /* Metrics Grid */
 .metrics-grid {
   display: grid;
@@ -610,6 +636,8 @@ p, h1, h2, dl, dd { margin: 0; }
     let currentConversationId = null;
     let activeSubagents = [];
     const cancelledAgents = new Set();
+    let pendingStop = null;
+    let pendingStopTimer = null;
 
     async function preparePixel() {
       if (!GOOGLE_ASSET) return;
@@ -706,7 +734,7 @@ p, h1, h2, dl, dd { margin: 0; }
         if (!row) {
           row = document.createElement('li');
           row.dataset.agentId = String(agent.id);
-          row.innerHTML = '<span class="agent-avatar"></span><div class="agent-copy"><strong></strong><span></span><small></small></div><button type="button" class="agent-stop" aria-label="Parar subagente" title="Parar subagente"><svg class="icon" aria-hidden="true"><use href="#i-stop"/></svg></button>';
+          row.innerHTML = '<span class="agent-avatar"></span><div class="agent-copy"><strong></strong><span></span><small></small></div><div class="agent-actions"><button type="button" class="agent-stop" aria-label="Parar subagente" title="Parar subagente"><svg class="icon" aria-hidden="true"><use href="#i-stop"/></svg></button><button type="button" class="agent-stop-confirm" aria-label="Confirmar parada do subagente" title="Confirmar parada">Parar</button><button type="button" class="agent-stop-cancel" aria-label="Cancelar parada" title="Cancelar">×</button></div>';
           list.append(row);
         } else {
           existingRows.delete(String(agent.id));
@@ -729,7 +757,10 @@ p, h1, h2, dl, dd { margin: 0; }
         row.querySelector('.agent-copy > strong').textContent = agent.name || 'Subagente';
         row.querySelector('.agent-copy > span').textContent = agent.task || (isRunning ? 'Processando' : 'Sem execução ativa');
         row.querySelector('.agent-copy > small').textContent = detail;
-        row.querySelector('.agent-stop').hidden = !isRunning;
+        const isPending = pendingStop === String(agent.id) && isRunning;
+        row.querySelector('.agent-stop').hidden = !isRunning || isPending;
+        row.querySelector('.agent-stop-confirm').hidden = !isPending;
+        row.querySelector('.agent-stop-cancel').hidden = !isPending;
         row.title = [agent.name, agent.task, detail].filter(Boolean).join(' — ');
       }
 
@@ -739,12 +770,37 @@ p, h1, h2, dl, dd { margin: 0; }
       }
     }
 
+    function cancelStop() {
+      pendingStop = null;
+      if (pendingStopTimer) {
+        clearTimeout(pendingStopTimer);
+        pendingStopTimer = null;
+      }
+      syncSubagentsList();
+    }
+
+    function askStop(agent) {
+      pendingStop = String(agent.id);
+      if (pendingStopTimer) clearTimeout(pendingStopTimer);
+      pendingStopTimer = setTimeout(() => {
+        pendingStop = null;
+        pendingStopTimer = null;
+        syncSubagentsList();
+      }, 8000);
+      syncSubagentsList();
+    }
+
     async function stopAgent(agent) {
       const id = String(agent.id);
       const parent = currentConversationId;
       if (!parent) {
         document.getElementById('session-sub').textContent = 'Falha ao parar: conversa não identificada';
         return;
+      }
+      pendingStop = null;
+      if (pendingStopTimer) {
+        clearTimeout(pendingStopTimer);
+        pendingStopTimer = null;
       }
       cancelledAgents.add(id);
       syncSubagentsList();
@@ -885,6 +941,13 @@ p, h1, h2, dl, dd { margin: 0; }
       for (const id of [...cancelledAgents]) {
         if (!activeSubagents.some(agent => String(agent.id) === id)) cancelledAgents.delete(id);
       }
+      if (pendingStop && !activeSubagents.some(agent => String(agent.id) === pendingStop)) {
+        pendingStop = null;
+        if (pendingStopTimer) {
+          clearTimeout(pendingStopTimer);
+          pendingStopTimer = null;
+        }
+      }
       syncSubagentsList();
     }
 
@@ -998,11 +1061,13 @@ p, h1, h2, dl, dd { margin: 0; }
       });
 
       document.getElementById('agent-list').addEventListener('click', event => {
-        const button = event.target.closest('.agent-stop');
-        if (!button) return;
-        const row = button.closest('li');
-        const agent = activeSubagents.find(item => String(item.id) === row?.dataset.agentId);
-        if (agent) stopAgent(agent);
+        const row = event.target.closest('li');
+        if (!row) return;
+        const agent = activeSubagents.find(item => String(item.id) === row.dataset.agentId);
+        if (!agent) return;
+        if (event.target.closest('.agent-stop')) askStop(agent);
+        else if (event.target.closest('.agent-stop-confirm')) stopAgent(agent);
+        else if (event.target.closest('.agent-stop-cancel')) cancelStop();
       });
 
       // 4. Initial Theme & Motion: sem botão, segue o sistema se não houver escolha salva.

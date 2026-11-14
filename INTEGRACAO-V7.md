@@ -11,7 +11,7 @@ Documento técnico de referência sobre a integração da interface V7 com os ev
 - **Janela do modelo:** tabela local (Gemini 1M, Claude 1M, GPT-OSS 128k). Modelo fora da tabela mostra tokens e nenhum percentual. O host não expõe esse valor em nenhuma API local.
 - **Interface:** botões de tema e de recarregar removidos; o painel atualiza sozinho a cada 5 s e segue o tema do sistema quando não há escolha salva. Pausa de animação mantida.
 - **Cartão `usage-hud.md`:** o hook deixou de gerá-lo. Ele usava janela de 200k e somava output, então mostrava 94% onde o painel mostra 13%. O painel passa a ser a única fonte.
-- **Parada:** botão por subagente em execução, o mesmo `CancelCascadeInvocation` da aba Overview; o nome vem do `Role` do invoke.
+- **Parada:** botão por subagente em execução, com confirmação em dois cliques; o mesmo `CancelCascadeInvocation` da aba Overview. O nome vem do `Role` do invoke.
 - **Limites:** o painel não renderiza acima do prompt. A parada usa o RPC do Language Server, não o `agentapi`.
 
 ### Carregar a V8

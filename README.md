@@ -39,7 +39,7 @@ Captura da interface do runtime renderizada com dados de demonstração. Os test
 - Título da sessão igual ao da lista lateral do Antigravity, com modelo e projeto.
 - Contexto lido do transcript: prompt = entrada + cache, sem somar a saída.
 - Acompanhamento dos subagentes com o nome da aba Overview, tarefa, atividade e o contexto de cada um.
-- Parar um subagente em execução pelo painel, como o botão "Stop Subagent" da aba Overview.
+- Parar um subagente em execução pelo painel, com confirmação em dois cliques, como o botão "Stop Subagent" da aba Overview.
 - Cota do modelo com percentual só quando o host informa; caso contrário, só o horário de renovação.
 - Temas claro e escuro, pausa das animações e respeito a movimento reduzido.
 - Atualização automática a cada 5 segundos, sem botão de recarregar.

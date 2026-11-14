@@ -111,11 +111,28 @@ let activity = { kind: 'agents', label: 'Coordenando subagentes', detail: '1 de 
     assert.equal(await page.locator('.agent-avatar .mascot').count(), 1);
     assert.equal(await page.locator('.agent-stop').count(), 1, 'Running subagent must have a stop button');
     assert.equal(await page.locator('.agent-stop').getAttribute('title'), 'Parar subagente');
+    assert.equal(await page.locator('.agent-stop-confirm').isVisible(), false);
+    assert.equal(await page.locator('.agent-stop-cancel').isVisible(), false);
     assert.ok(!/navigator\.clipboard|copyStopRequest|Parar pelo chat/.test(ui));
+
+    // Primeiro clique pede confirmação; cancelar não chama o endpoint.
     await page.locator('.agent-stop').click();
+    assert.equal(await page.locator('.agent-stop-confirm').isVisible(), true);
+    assert.equal(await page.locator('.agent-stop-cancel').isVisible(), true);
+    assert.equal(await page.locator('.agent-stop').isVisible(), false);
+    assert.equal(stopEndpointCalls, 0);
+    await page.locator('.agent-stop-cancel').click();
+    assert.equal(await page.locator('.agent-stop-confirm').isVisible(), false);
+    assert.equal(await page.locator('.agent-stop').isVisible(), true);
+    assert.equal(stopEndpointCalls, 0);
+
+    // Confirmar chama o endpoint e some com os controles.
+    await page.locator('.agent-stop').click();
+    await page.locator('.agent-stop-confirm').click();
     await page.waitForTimeout(150);
-    assert.equal(stopEndpointCalls, 1, 'Clicking stop must call the stop endpoint');
-    assert.equal(await page.locator('.agent-stop').isVisible(), false, 'Stop button disappears after the click');
+    assert.equal(stopEndpointCalls, 1, 'Confirming stop must call the stop endpoint');
+    assert.equal(await page.locator('.agent-stop').isVisible(), false, 'Stop button disappears after the confirmation');
+    assert.equal(await page.locator('.agent-stop-confirm').isVisible(), false);
 
     await page.setViewportSize({ width: 320, height: 862 });
     await page.evaluate(sample => {

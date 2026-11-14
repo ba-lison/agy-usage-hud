@@ -5,7 +5,7 @@
 
 <h1 align="center">AGY UsageHUD</h1>
 
-<p align="center">Plugin independente para o Antigravity, com um painel lateral de atividade da sessão, subagentes, contexto real e cota do modelo. Usa um <strong>sidecar local</strong> para coletar os dados e servir a interface.</p>
+<p align="center">Saiba quanto contexto e cota ainda restam no Antigravity. Plugin independente com painel lateral de uso de tokens, limite real da janela, subagentes e atividade da sessão, servido por um <strong>sidecar local</strong>.</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Windows-validado-0F3D3A?style=flat-square" alt="Windows validado">
@@ -23,11 +23,13 @@
 
 ## Sobre o projeto
 
-O HUD mantém os sinais da sessão visíveis enquanto você trabalha no Antigravity. **Sparky**, o mascote de estrelinha com olhos, acompanha atividades como leitura de arquivos, pesquisa, edição e uso do terminal.
+O Antigravity não mostra, durante o trabalho, quanto da janela de contexto você já gastou nem quanto ainda falta. Você descobre o limite quando bate nele. O UsageHUD põe essa informação na lateral da sessão e atualiza sozinho a cada 5 segundos.
+
+O painel lê o `contextWindowUsage` do Language Server do próprio app e mostra o total usado, o limite efetivo da sessão, os grupos de tokens (mensagens, prompt de sistema e ferramentas), a cota do modelo e os subagentes em execução, cada um com o próprio contexto. **Sparky**, o mascote de estrelinha com olhos, acompanha atividades como leitura de arquivos, pesquisa, edição e uso do terminal.
 
 O plugin reúne manifesto, hooks, uma skill de handoff e um sidecar. O Antigravity gerencia o processo do sidecar; ele executa um servidor HTTP em loopback e fornece a página do painel. É uma integração local com o aplicativo, sem publicação no marketplace oficial.
 
-Interface em português do Brasil. A versão atual foi validada localmente no Windows em 01/11/2026. A integração pode precisar de ajustes quando o Antigravity mudar seus formatos ou interfaces.
+Interface em português do Brasil. A versão 1.3.3 foi validada localmente no Windows em 14/11/2026, com o painel abrindo zerado ao reiniciar o app. A integração pode precisar de ajustes quando o Antigravity mudar seus formatos ou interfaces.
 
 ## Demonstração e recursos
 
@@ -44,6 +46,9 @@ Captura da interface com dados fictícios, no tema Legacy Dark. Não representa 
 - Cota do modelo com percentual só quando o host informa; caso contrário, só o horário de renovação.
 - Cores, borda e raio do tema ativo do Antigravity: o painel muda de tema junto com o app, sem seletor próprio.
 - Atualização automática a cada 5 segundos, sem botão de recarregar.
+- Painel zerado ao reiniciar o app: a conversa de ontem não aparece antes da primeira mensagem desta execução.
+
+O HUD roda no **Antigravity App** no Windows. Sidecars existem só no aplicativo, então o painel não funciona no IDE nem no CLI; essas superfícies têm outras fontes de dado e não são cobertas por esta versão.
 
 A disponibilidade dos dados depende do Antigravity. O título e a árvore de subagentes vêm do `conversation_summaries.db` do app; o nome de cada subagente é o `Role` do `invoke_subagent`; o contexto vem do `transcript.jsonl` da conversa. O total do contexto, o limite efetivo e os grupos de tokens vêm do `contextWindowUsage` do Language Server. No teste de 2026-11-14, o Gemini 4 Hydrogen apareceu com **256k de limite efetivo** e 141,1k usados (55%), não 1M. Sem resposta do Language Server, o painel mostra só os tokens e não inventa limite. A cota usa a informação do host quando acessível e nunca cai para a cota de outro modelo. A parada usa o RPC `CancelCascadeInvocation` do Language Server, o mesmo caminho da aba Overview. Não substitui a informação oficial de uso da conta.
 

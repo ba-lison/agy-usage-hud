@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/capa-sparky-dark.png">
-  <img src="assets/capa-sparky.png" alt="AGY UsageHUD with Sparky — session activity, context and model quota in Antigravity" width="1280">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/capa-sparky-en-dark.png">
+  <img src="assets/capa-sparky-en.png" alt="AGY UsageHUD with Sparky — session activity, context and model quota in Antigravity" width="1280">
 </picture>
 
 <h1 align="center">AGY UsageHUD</h1>

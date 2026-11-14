@@ -177,12 +177,28 @@ function fetchContextUsage(convId) {
   const cached = contextCache.get(convId)
   if (cached && Date.now() - cached.at < 4000) return Promise.resolve(cached.value)
   if (contextInFlight.has(convId)) return contextInFlight.get(convId)
-  const pending = loadContextUsage(convId).finally(() => contextInFlight.delete(convId))
+  const pending = loadContextUsage(convId)
+    .catch(() => null)
+    .finally(() => contextInFlight.delete(convId))
   contextInFlight.set(convId, pending)
   return pending
 }
 
+// Qualquer falha do Language Server (porta velha, raiz/CSRF recusados, frame
+// inválido) vira null: /api/activity e /api/stats seguem pelo transcript em vez
+// de responder 500 e congelar o mascote. O null também fica 4 s em cache.
 async function loadContextUsage(convId) {
+  let value = null
+  try {
+    value = await readContextUsage(convId)
+  } catch {
+    value = null
+  }
+  contextCache.set(convId, { at: Date.now(), value })
+  return value
+}
+
+async function readContextUsage(convId) {
   const base = languageServerBase()
   if (!base) return null
   const csrf = await languageServerCsrf(base)
@@ -203,31 +219,26 @@ async function loadContextUsage(convId) {
     payload,
   ])
 
-  let value = null
-  try {
-    const body = await connectFirstFrame(
-      base,
-      '/exa.language_server_pb.LanguageServerService/StreamAgentStateUpdates',
-      frame,
-      csrf,
-    )
-    const usage = JSON.parse(body)?.update?.contextWindowUsage
-    if (
-      usage &&
-      Number.isFinite(usage.estimatedTokensUsed) &&
-      Number.isFinite(usage.maxContextTokens) &&
-      usage.maxContextTokens > 0
-    ) {
-      value = {
-        tokens: usage.estimatedTokensUsed,
-        window: usage.maxContextTokens,
-        groups: contextGroups(usage.tokenGroups),
-      }
+  const body = await connectFirstFrame(
+    base,
+    '/exa.language_server_pb.LanguageServerService/StreamAgentStateUpdates',
+    frame,
+    csrf,
+  )
+  const usage = JSON.parse(body)?.update?.contextWindowUsage
+  if (
+    usage &&
+    Number.isFinite(usage.estimatedTokensUsed) &&
+    Number.isFinite(usage.maxContextTokens) &&
+    usage.maxContextTokens > 0
+  ) {
+    return {
+      tokens: usage.estimatedTokensUsed,
+      window: usage.maxContextTokens,
+      groups: contextGroups(usage.tokenGroups),
     }
-  } catch {}
-
-  contextCache.set(convId, { at: Date.now(), value })
-  return value
+  }
+  return null
 }
 
 // Ferramentas MCP configuradas no app. Lê apenas os nomes dos servidores e os
@@ -283,9 +294,14 @@ function languageServerBase() {
 
 async function languageServerCsrf(base) {
   if (process.env.ANTIGRAVITY_CSRF_TOKEN) return process.env.ANTIGRAVITY_CSRF_TOKEN
-  let port = languageServerPort()
+  // O endereço explícito manda; o log do Language Server é só o fallback.
+  let port = 0
+  if (process.env.ANTIGRAVITY_LS_ADDRESS) {
+    try { port = Number(new URL(process.env.ANTIGRAVITY_LS_ADDRESS).port) || 0 } catch {}
+  }
+  if (!port) port = languageServerPort()
   if (!port && base) {
-    try { port = Number(new URL(base).port) } catch {}
+    try { port = Number(new URL(base).port) || 0 } catch {}
   }
   return port ? csrfFor(port) : null
 }

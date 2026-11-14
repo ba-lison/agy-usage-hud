@@ -311,4 +311,63 @@ console.log('6. Validando o endpoint de parada do sidecar...')
 }
 console.log('   ✓ Endpoint de parada valida entrada e vínculo antes do Language Server.')
 
+// 7. Language Server fora do ar: /api/activity e /api/stats não podem dar 500
+console.log('7. Validando queda do Language Server (porta recusada, sem token)...')
+{
+  const serverPath = path.resolve(__dirname, '../sidecars/usage_hud/server.mjs')
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'agy-hud-ls-down-'))
+  const convId = 'conv-ls-down'
+  const logs = path.join(home, '.gemini', 'antigravity', 'brain', convId, '.system_generated', 'logs')
+  fs.mkdirSync(logs, { recursive: true })
+  fs.writeFileSync(path.join(logs, 'transcript.jsonl'), JSON.stringify({ type: 'PLANNER_RESPONSE', input_tokens: 1000, cache_read_tokens: 500, output_tokens: 20 }) + '\n')
+
+  const env = { ...process.env, USERPROFILE: home, HOME: home, APPDATA: path.join(home, 'AppData'), ANTIGRAVITY_SIDECAR_WEB_PORT: '0', USAGE_HUD_NO_INFO: '1', ANTIGRAVITY_LS_ADDRESS: 'http://127.0.0.1:1' }
+  delete env.ANTIGRAVITY_CSRF_TOKEN
+  delete env.ANTIGRAVITY_APP_DATA_DIR
+  const sidecar = spawn(process.execPath, [serverPath], { env })
+  let output = ''
+  sidecar.stdout.on('data', chunk => (output += chunk))
+  sidecar.stderr.on('data', () => {})
+  const port = await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('sidecar não iniciou a tempo')), 8000)
+    sidecar.stdout.on('data', () => {
+      const match = /127\.0\.0\.1:(\d+)/.exec(output)
+      if (!match) return
+      clearTimeout(timer)
+      resolve(Number(match[1]))
+    })
+    sidecar.on('exit', code => { clearTimeout(timer); reject(new Error(`sidecar saiu com código ${code}`)) })
+  })
+  const base = `http://127.0.0.1:${port}`
+
+  try {
+    await fetch(`${base}/api/event`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event: 'PreToolUse', conversationId: convId, stepIdx: 1, toolCall: { name: 'run_command', detail: 'Comando: npm test' }, timestamp: new Date().toISOString() }),
+    })
+
+    // Duas vezes: a segunda passa pelo null em cache.
+    for (let i = 0; i < 2; i++) {
+      const act = await fetch(`${base}/api/activity?convId=${convId}`)
+      assert.equal(act.status, 200, '/api/activity deve responder 200 com o Language Server fora do ar')
+      const data = await act.json()
+      assert.equal(data.kind, 'terminal', 'estado atual preservado')
+      assert.ok(Array.isArray(data.subagents), 'subagentes presentes (sem janela)')
+    }
+
+    const stats = await fetch(`${base}/api/stats?convId=${convId}`)
+    assert.equal(stats.status, 200, '/api/stats deve responder 200 com o Language Server fora do ar')
+    const data = await stats.json()
+    assert.equal(data.context.source, 'transcript', 'cai na leitura do transcript')
+    assert.equal(data.context.tokens, 1500, 'tokens vindos do transcript')
+    assert.equal(data.context.window, null, 'sem janela do Language Server')
+    assert.equal(data.context.pct, null, 'sem percentual sem janela')
+  } finally {
+    sidecar.kill()
+    fs.rmSync(home, { recursive: true, force: true })
+  }
+}
+console.log('   ✓ Language Server fora do ar: activity e stats respondem 200 pelo transcript.')
+
 console.log('\n🎉 Todos os testes de integração foram executados e passaram com 100% de sucesso!')

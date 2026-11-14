@@ -74,7 +74,7 @@ O painel lê as variáveis que o Antigravity envia ao sidecar no evento `theme-c
 
 Os cartões têm raio de 12 px e borda de 1 px; botões usam 8 px e os contadores são pílulas. A fonte é a Google Sans Flex, embutida no HTML, com base de 16 px. O anel da cota troca o `--primary` pelo `--warning` a partir de 80% e pelo `--error` a partir de 95%.
 
-A prévia [`propostas/nativo-2026-11-15/index.html`](propostas/nativo-2026-11-15/index.html) abre direto no navegador, sem servidor. Ela mostra o painel em 472 px com dados fictícios, as 19 reações do Sparky e um seletor claro/escuro que existe só na prévia.
+A prévia [`preview/index.html`](preview/index.html) abre direto no navegador, sem servidor. Ela mostra o painel em 472 px com dados fictícios, as 19 reações do Sparky e um seletor claro/escuro que existe só na prévia.
 
 O painel não abre sozinho ao iniciar o app: o `sidecar.json` não tem campo de auto-open e o Antigravity abre o Overview nativo por padrão. O HUD abre pela linha **Extensions** ou pela aba do painel lateral; se a aba estava aberta ao fechar, o app pode restaurá-la, mas não há garantia documentada.
 
@@ -85,6 +85,8 @@ Sparky é a estrelinha colorida com olhos de bloco que acompanha a sessão. As e
 <p align="center"><img src="assets/sparky-reacoes.png" alt="As 19 reações do Sparky em grade: à disposição, pesquisa na web, lendo uma página, usando o navegador, lendo um arquivo, buscando no projeto, editando arquivo, comando no terminal, coordenando subagentes, pergunta, gerando imagem, usando ferramenta, pensando, timer em segundo plano, aguardando, turno encerrado, concluído, interrompido e erro" width="540"></p>
 
 As 19 reações, uma por estado do `activity-engine`, capturadas da prévia. Lá elas estão animadas e, ao clicar numa delas, o painel faz a transição para aquele estado. Concluído, Interrompido, Erro e Turno encerrado são transitórios: duram cerca de 6 s e assentam em À disposição (ou em Aguardando, se o `Stop` vier com `fullyIdle:false`).
+
+A galeria [`sparky/sparky.html`](sparky/sparky.html) abre a mesma coisa sozinha, sem servidor: as 19 reações animadas, com seletor de tema e os SVGs soltos em `sparky/sprites/`.
 
 | Reação | Quando aparece | O que muda no Sparky |
 | --- | --- | --- |
@@ -132,7 +134,7 @@ No Antigravity, confira o plugin em **Customizations > Installed** e abra o pain
 
 O painel não abre sozinho ao iniciar o app: o `sidecar.json` não tem campo de auto-open e o Antigravity abre o Overview nativo por padrão. Para abrir em um clique a partir de um chat ou artefato, use [Abrir o UsageHUD](sidecar://usage-hud/usage_hud/ui.html); o link exige o plugin habilitado e o sidecar rodando. A aba também aparece na linha **Extensions** do Overview.
 
-Depois de atualizar apenas a interface, feche e reabra a aba do HUD. Se o aplicativo mantiver a página antiga, reinicie o Antigravity quando ele estiver ocioso. O painel consulta os dados sozinho a cada 5 segundos; não há botão de recarregar. O [guia de atualização](INTEGRACAO-V7.md#carregar-atualizacao) explica os limites desse procedimento.
+Depois de atualizar apenas a interface, feche e reabra a aba do HUD. Se o aplicativo mantiver a página antiga, reinicie o Antigravity quando ele estiver ocioso. O painel consulta os dados sozinho a cada 5 segundos; não há botão de recarregar. O [guia de atualização](docs/INTEGRACAO.md) explica os limites desse procedimento.
 
 ### Desenvolver e verificar
 
@@ -146,17 +148,18 @@ A suíte de integração usa apenas Node.js. A suíte visual precisa de Playwrig
 
 Os testes ficam no repositório fonte; o ZIP da release contém apenas o plugin e sua documentação.
 
-O histórico de desenvolvimento está preservado desde 30/10/2026. A proposta atual fica em `propostas/nativo-2026-11-15/`; a interface executada pelo plugin é `sidecars/usage_hud/ui.html`.
+O histórico de desenvolvimento está preservado desde 30/10/2026. A interface executada pelo plugin é `sidecars/usage_hud/ui.html`; a prévia do painel fica em `preview/` e os sprites do Sparky em `sparky/`.
 
 ## Documentação e ajuda
 
 | Assunto | Referência |
 | --- | --- |
-| Instalação, atualização, integração e limites | [INTEGRACAO-V7.md](INTEGRACAO-V7.md) |
+| Instalação, atualização, integração e limites | [docs/INTEGRACAO.md](docs/INTEGRACAO.md) |
 | Manifesto do plugin | [plugin.json](plugin.json) |
 | Eventos e hooks | [hooks.json](hooks.json) |
 | Configuração do sidecar | [sidecar.json](sidecars/usage_hud/sidecar.json) |
-| Prévia interativa com dados de demonstração | [Arquivos da demonstração](https://github.com/ba-lison/agy-usage-hud/tree/main/propostas/nativo-2026-11-15) — abra o index.html localmente |
+| Prévia interativa com dados de demonstração | [Arquivos da demonstração](https://github.com/ba-lison/agy-usage-hud/tree/main/preview) — abra o index.html localmente |
+| Galeria das 19 reações do Sparky | [sparky/sparky.html](sparky/sparky.html) |
 | Bugs e sugestões | [Issues](https://github.com/ba-lison/agy-usage-hud/issues) |
 
 Contribuições por issue ou pull request são bem-vindas. Ao relatar um problema, informe a versão do Antigravity, a versão do Node, o sistema e os passos para reproduzir. Remova dados pessoais e credenciais das capturas e dos logs compartilhados.

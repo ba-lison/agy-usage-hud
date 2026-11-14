@@ -1,6 +1,15 @@
 {
+  "$schema": "https://antigravity.google/schemas/v1/plugin.json",
   "name": "usage-hud",
   "displayName": "AGY - UsageHUD",
   "version": "1.3.0",
-  "description": "Painel local para Antigravity: contexto detalhado pelo Language Server, ferramentas MCP, subagentes com parada e cota do modelo sem número inventado."
+  "description": "Painel local para Antigravity: contexto detalhado pelo Language Server, ferramentas MCP, subagentes com parada e cota do modelo sem número inventado.",
+  "logo": "assets/logo.svg",
+  "author": {
+    "name": "Alison Cruz / BALISON",
+    "url": "https://github.com/ba-lison"
+  },
+  "repository": "https://github.com/ba-lison/agy-usage-hud",
+  "license": "MIT",
+  "keywords": ["antigravity", "usage", "tokens", "contexto", "subagentes", "sidecar"]
 }

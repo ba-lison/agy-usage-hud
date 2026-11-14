@@ -1,13 +1,13 @@
-# Integração AGY UsageHUD — Interface V7 e Sessão Real
+# Integração do AGY UsageHUD
 
-Documento técnico de referência sobre a integração da interface V7 com os eventos reais do Antigravity.
+Documento técnico de referência sobre a integração do painel com os eventos reais do Antigravity e o histórico de cada versão.
 
 ## V9: desenho nativo (2026-11-15)
 
 - **Tema:** o painel segue o tema do Antigravity. `applyHostTheme()` converte as variáveis do `theme-change` (`--background`, `--card`, `--card-border`, `--border`, `--primary`, `--muted-foreground`, `--chart-*` etc.) em tokens `--hud-*`; aceita hex, `color-mix()` e o trio HSL do shadcn. Sem host, valem os valores do Legacy Dark e do Default Light. Saíram a lógica de `prefers-color-scheme`, o `localStorage` de tema e o `setTheme()`.
 - **Visual:** cartões de raio 12 px com borda de 1 px, botões de 8 px, contadores em pílula, título da sessão em 16 px e subtítulo em 13,7 px. Contexto em `--chart-1/2/3` na própria barra principal; anel da cota no `--primary`.
 - **Sparky:** cada estado do `activity-engine` tem pose, olhar e acessório próprios, e a troca de estado muda só o `data-state` do SVG existente, com transição. O botão de pausa e o estado `motionPaused`/`data-motion` foram removidos; só o `prefers-reduced-motion` do sistema para as animações.
-- **Prévia:** `propostas/nativo-2026-11-15/index.html`, autocontida, com dados fictícios, as 19 reações (com Concluído e Interrompido transitórios) e um seletor de tema que existe só na prévia.
+- **Prévia:** `preview/index.html`, autocontida, com dados fictícios, as 19 reações (com Concluído e Interrompido transitórios) e um seletor de tema que existe só na prévia.
 - As notas abaixo sobre seletor de tema e pausa de animação valem para as versões anteriores.
 
 ## V8 — números reais — 2026-11-14
@@ -182,7 +182,7 @@ O painel envia `POST /api/subagents/stop` com a conversa pai e o id do filho. O 
 - O SDK continua responsável pela ponte com o host. O listener duplicado de tema foi removido do HUD. O seletor claro/escuro e a pausa de animações continuam disponíveis.
 - Os valores acessíveis dos indicadores de consumo e contexto acompanham os valores exibidos. Retorno de chamada de subagente não é apresentado como prova de sucesso.
 - Teste de regressão: test/ui.test.cjs usa o preload real instalado, injeta cores do host e simula telemetria, sem acessar conversas reais. Confere avatar/tarefa, contraste mínimo de 4,5:1, ausência de sobreposição e rolagem horizontal, 0/1/6 subagentes, recolher/expandir, ausência de controles de parada/cópia e movimento reduzido. São cinco larguras (320, 390, 472, 680 e 1024 px), nos dois temas. A suíte de integração existente também passou.
-- Prévia fiel com dados de demonstração: propostas/nativo-2026-11-15/index.html. Capturas ficam na mesma pasta.
+- Prévia fiel com dados de demonstração: preview/index.html. Capturas ficam na mesma pasta.
 - Limites: browser headless com o preload real; a janela aberta do Antigravity não foi controlada. A precisão das cotas e dos estados vindos do servidor não foi validada com uma sessão real nesta correção. O cancelamento direto de subagentes permanece não suportado.
 - Instalação: atualizar somente sidecars/usage_hud/ui.html na cópia local do plugin, preservando o original e comparando o hash. O servidor lê esse arquivo a cada requisição; recriar a página do HUD carrega a correção. O procedimento e o limite do teste na janela real estão na seção Como carregar a atualização no Antigravity.
 
@@ -211,7 +211,7 @@ Aplicação local conferida em 2026-11-01: %USERPROFILE%\.gemini\config\plugins\
 - Runtime: Antigravity App, Windows e Node.js 22+ no PATH. Teste local: Node.js 22.21.1. Não há dependências npm de runtime; o SDK vem da instalação do host.
 - Desenvolvimento: o teste visual requer Playwright e Chrome. O teste de integração usa somente Node.js.
 - sync.bat usa USERPROFILE em vez de um nome de usuário fixo e também copia a licença MIT, os avisos de terceiros e as licenças das fontes.
-- A release v1.0.0 acompanha a versão 1.0.0 de plugin.json. O pacote de runtime exclui .git, .worktrees, propostas, capturas de desenvolvimento e testes.
+- A release v1.0.0 acompanha a versão 1.0.0 de plugin.json. O pacote de runtime exclui .git, .worktrees, preview, sparky, docs e testes.
 - O histórico Git contém a evolução original. Não foram inventadas datas ou versões históricas nem reescritos os commits de criação.
 
 Sparky é o nome confirmado por Bali para o mascote em 2026-11-01. A capa usa a mesma estrelinha com olhos do runtime, em assets/sparky.svg; o nome também identifica o mascote para tecnologias assistivas no painel.

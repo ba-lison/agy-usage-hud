@@ -33,7 +33,7 @@
 .mascot .prop-error { color:var(--hud-error); }
 .mascot .prop-question { color:var(--hud-warning); }
 .mascot .mini-eye { fill:var(--hud-eye); stroke:none; }
-.mascot :is(.spin,.scan,.scanline,.write,.pen,.type,.cursor,.mini,.link,.pop,.twinkle,.gear,.tdot,.hourglass,.z,.alarm) { transform-box:fill-box; transform-origin:center; }
+.mascot :is(.spin,.scan,.scanline,.write,.pen,.type,.cursor,.mini,.link,.pop,.twinkle,.gear,.tdot,.hourglass,.z,.alarm,.spark,.drop,.sigh,.click,.hand) { transform-box:fill-box; transform-origin:center; }
 .mascot .write, .mascot .type { transform-origin:left center; }
 
 /* Acessório visível só no estado dele. */
@@ -41,7 +41,18 @@
 .mascot[data-state="files"] .prop-files, .mascot[data-state="writing"] .prop-writing, .mascot[data-state="terminal"] .prop-terminal,
 .mascot[data-state="agents"] .prop-agents, .mascot[data-state="question"] .prop-question, .mascot[data-state="image"] .prop-image,
 .mascot[data-state="external"] .prop-external, .mascot[data-state="model"] .prop-model, .mascot[data-state="waiting"] .prop-waiting,
-.mascot[data-state="ended"] .prop-ended, .mascot[data-state="error"] .prop-error { opacity:1; transform:none; }
+.mascot[data-state="ended"] .prop-ended, .mascot[data-state="error"] .prop-error, .mascot[data-state="browser"] .prop-browser,
+.mascot[data-state="timer"] .prop-timer, .mascot[data-state="done"] .prop-done, .mascot[data-state="interrupted"] .prop-interrupted { opacity:1; transform:none; }
+
+/* Reações de fim de turno: olhos felizes (concluído) e sobrancelhas bravas (interrompido). */
+.mascot .eyes { transition:opacity 160ms ease; }
+.mascot .expr { opacity:0; fill:none; stroke:var(--hud-eye); stroke-linecap:round; stroke-linejoin:round; transition:opacity 160ms ease; }
+.mascot .happy { stroke-width:2.8; }
+.mascot .brows { stroke-width:2.4; }
+.mascot .prop-done { color:var(--hud-chart-2); }
+.mascot .prop-interrupted { color:var(--hud-chart-6); }
+.mascot[data-state="done"] .eyes { opacity:0; animation:none; }
+.mascot[data-state="done"] .happy, .mascot[data-state="interrupted"] .brows { opacity:1; }
 .mascot[data-state="page"] .glasses, .mascot[data-state="reading"] .glasses { opacity:1; }
 
 /* Pose do corpo: inclina na direção do acessório, sobe quando pensa, descansa no fim. */
@@ -58,6 +69,10 @@
 .mascot[data-state="waiting"] .body { transform:translateY(2px); }
 .mascot[data-state="ended"] .body { transform:translateY(5px) rotate(-8deg); }
 .mascot[data-state="error"] .body { transform:rotate(-4deg); }
+.mascot[data-state="browser"] .body { transform:rotate(4deg); }
+.mascot[data-state="timer"] .body { transform:translateY(2px) rotate(-2deg); }
+.mascot[data-state="done"] .body { transform:translateY(-2px); }
+.mascot[data-state="interrupted"] .body { transform:translateY(3px) rotate(-5deg); }
 
 /* Olhar (deslocamento) e expressão (altura de cada olho). */
 .mascot[data-state="page"] .face, .mascot[data-state="reading"] .face, .mascot[data-state="writing"] .face { transform:translate(1px,1px); }
@@ -72,6 +87,10 @@
 .mascot[data-state="question"] .eye-r, .mascot[data-state="error"] .eye-l { transform:scaleY(.67); }
 .mascot[data-state="error"] .eye-r { transform:scaleY(1.17); }
 .mascot[data-state="model"] :is(.eye-l,.eye-r), .mascot[data-state="ended"] :is(.eye-l,.eye-r) { transform:scaleY(.33); }
+.mascot[data-state="browser"] .face { transform:translate(1px,1px); }
+.mascot[data-state="interrupted"] .face { transform:translate(-1px,1px); }
+.mascot[data-state="browser"] .eye-r, .mascot[data-state="timer"] :is(.eye-l,.eye-r) { transform:scaleY(.67); }
+.mascot[data-state="interrupted"] :is(.eye-l,.eye-r) { transform:scaleY(.55); }
 
 /* Movimento de cada estado. */
 .mascot[data-state="idle"] .glance { animation:idle-look 9s cubic-bezier(.45,0,.55,1) infinite; }
@@ -107,6 +126,20 @@
 .mascot[data-state="ended"] .z { animation:drift 3s ease-out infinite; }
 .mascot[data-state="ended"] .z2 { animation-delay:1.5s; }
 .mascot[data-state="error"] .alarm { animation:alarm 1.2s steps(1) infinite; }
+.mascot[data-state="browser"] .glance { animation:read-lines 3s cubic-bezier(.45,0,.55,1) infinite; }
+.mascot[data-state="browser"] .click { animation:click 2.4s cubic-bezier(.45,0,.55,1) infinite; }
+.mascot[data-state="timer"] .float-body { animation-duration:6s; }
+.mascot[data-state="timer"] .hand { animation:rotate 4s linear infinite; }
+/* Concluído: três pulinhos e volta a flutuar; faíscas piscando. */
+.mascot[data-state="done"] .float-body { animation:hop 560ms cubic-bezier(.3,0,.3,1) 3, mascot-float 4s 1.7s cubic-bezier(.45,0,.55,1) infinite; }
+.mascot[data-state="done"] .spark { animation:twinkle 1.4s ease-in-out infinite; }
+.mascot[data-state="done"] .s2 { animation-delay:.45s; }
+.mascot[data-state="done"] .s3 { animation-delay:.9s; }
+/* Interrompido: balança de raiva, gota escorrendo e um suspiro. */
+.mascot[data-state="interrupted"] .float-body { animation:shake 240ms ease-in-out 4, mascot-float 6s 1s cubic-bezier(.45,0,.55,1) infinite; }
+.mascot[data-state="interrupted"] .eyes { animation:none; }
+.mascot[data-state="interrupted"] .drop { animation:drop 1.8s ease-in infinite; }
+.mascot[data-state="interrupted"] .sigh { animation:sigh 3s ease-out 1s infinite; }
 
 @keyframes palette-flow { 0%,25%,100%{opacity:0} 12.5%{opacity:1} }
 @keyframes mascot-float { 0%,100%{transform:translateY(2px) rotate(-.6deg)} 50%{transform:translateY(-3px) rotate(.6deg)} }
@@ -133,6 +166,10 @@
 @keyframes flip { 0%,70%{transform:rotate(0)} 85%,100%{transform:rotate(180deg)} }
 @keyframes drift { 0%{opacity:0;transform:translate(0,4px)} 30%{opacity:1} 100%{opacity:0;transform:translate(3px,-6px)} }
 @keyframes alarm { 0%{opacity:1} 50%{opacity:.35} }
+@keyframes hop { 0%,100%{transform:translateY(0) scale(1,1)} 18%{transform:translateY(1px) scale(1.04,.95)} 50%{transform:translateY(-8px) scale(.98,1.03)} 80%{transform:translateY(0) scale(1.03,.97)} }
+@keyframes drop { 0%{opacity:0;transform:translateY(-2px)} 20%,60%{opacity:1} 100%{opacity:0;transform:translateY(7px)} }
+@keyframes sigh { 0%{opacity:0;transform:translateX(2px)} 25%{opacity:.9} 100%{opacity:0;transform:translateX(-6px)} }
+@keyframes click { 0%,100%{transform:translate(0,0) scale(1)} 35%,45%{transform:translate(-8px,-4px) scale(1)} 50%{transform:translate(-8px,-4px) scale(.82)} 58%{transform:translate(-8px,-4px) scale(1)} }
 
 /* Linhas de subagente sem execução ativa e movimento reduzido do sistema: tudo parado. */
 .mascot[data-still] *, .mascot[data-still] { animation:none !important; transition:none !important; }
@@ -273,14 +310,12 @@ p, h1, h2, dl, dd { margin: 0; }
 .agent-list { list-style: none; margin: 0; padding: 0 4px 4px; max-height: 260px; overflow-y: auto; border-top: 1px solid var(--hud-border); }
 .agent-list li { display: flex; align-items: center; gap: 8px; padding: 6px 4px 6px 4px; border-top: 1px solid var(--hud-border); }
 .agent-list li:first-child { border-top: 0; }
-.agent-list li[data-depth="2"] { padding-left: 16px; }
-.agent-list li[data-depth="3"] { padding-left: 28px; }
-.agent-list li[data-depth="4"] { padding-left: 40px; }
 .agent-avatar { width: 36px; height: 36px; flex: none; display: grid; place-items: center; }
 .agent-copy { flex: 1; min-width: 0; overflow-wrap: anywhere; line-height: 1.35; }
 .agent-copy strong { display: block; font-size: 13px; font-weight: 500; }
 .agent-copy span { display: block; font-size: 12px; color: var(--hud-text-muted); }
 .agent-copy small { display: block; font-size: 11.5px; color: var(--hud-text-muted); }
+.agent-tag { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 9999px; background: var(--hud-secondary); color: var(--hud-text-muted); font-size: 10.5px; font-style: normal; font-weight: 500; line-height: 16px; vertical-align: 1px; }
 .agent-list li[data-status="cancelled"] .agent-copy, .agent-list li[data-status="completed"] .agent-copy { opacity: 0.75; }
 .agent-actions { display: flex; align-items: center; gap: 4px; flex: none; }
 .agent-stop { border: 1px solid var(--hud-border); }
@@ -463,6 +498,7 @@ p, h1, h2, dl, dd { margin: 0; }
       idle:{label:'À disposição',title:'Aguardando próxima instrução.',detail:'Aguardando sua próxima mensagem'},
       web:{label:'Pesquisa na web',title:'Buscando referências na web.',detail:'Chamada de pesquisa solicitada; aguardando retorno.'},
       page:{label:'Lendo uma página',title:'Lendo a página solicitada.',detail:'Leitura de uma página solicitada.'},
+      browser:{label:'Usando o navegador',title:'Navegando numa página.',detail:'Ação no navegador solicitada.'},
       reading:{label:'Lendo um arquivo',title:'Lendo o arquivo solicitado.',detail:'Leitura de arquivo solicitada.'},
       files:{label:'Buscando no projeto',title:'Buscando no conteúdo do projeto.',detail:'Busca de texto ou arquivos solicitada.'},
       writing:{label:'Editando arquivo',title:'Preparando uma alteração.',detail:'Edição de arquivo solicitada.'},
@@ -472,8 +508,11 @@ p, h1, h2, dl, dd { margin: 0; }
       image:{label:'Gerando imagem',title:'Uma chamada de imagem.',detail:'Geração de imagem solicitada.'},
       external:{label:'Usando ferramenta',title:'Uma ferramenta em atividade.',detail:'Ferramenta em execução.'},
       model:{label:'Pensando',title:'Organizando a próxima ideia.',detail:'O modelo está preparando a próxima resposta.'},
+      timer:{label:'Timer em segundo plano',title:'Esperando o timer.',detail:'Aguardando um timer ou tarefa em segundo plano.'},
       waiting:{label:'Aguardando próxima ação',title:'A chamada retornou.',detail:'Aguardando a próxima ação da sessão.'},
       ended:{label:'Turno encerrado',title:'O turno foi encerrado.',detail:'Turno finalizado.'},
+      done:{label:'Concluído',title:'Tarefa concluída.',detail:'Turno concluído. Aguardando sua próxima mensagem.'},
+      interrupted:{label:'Interrompido',title:'A execução foi interrompida.',detail:'Você interrompeu a execução.'},
       error:{label:'Erro na ferramenta',title:'A ferramenta informou um erro.',detail:'O retorno trouxe um sinal de erro ou interrupção.'}
     };
 
@@ -485,6 +524,10 @@ p, h1, h2, dl, dd { margin: 0; }
     const cancelledAgents = new Set();
     let pendingStop = null;
     let pendingStopTimer = null;
+    // Linha que acabou de sair de "rodando" anima a reação por alguns segundos e depois para.
+    const REACTION_MS = 6000;
+    const rowReactions = new Map();
+    let settleTimer = null;
 
     async function preparePixel() {
       if (!GOOGLE_ASSET) return;
@@ -539,7 +582,11 @@ p, h1, h2, dl, dd { margin: 0; }
         '<g class="prop prop-model"><path d="M85 13h23q7 0 7 7v9q0 7-7 7H85q-7 0-7-7v-9q0-7 7-7Z"/><circle cx="79" cy="41" r="3"/><circle cx="74" cy="47" r="1.8"/><g class="ink"><circle class="tdot" cx="88" cy="25" r="1.6"/><circle class="tdot" cx="97" cy="25" r="1.6"/><circle class="tdot" cx="106" cy="25" r="1.6"/></g></g>',
         '<g class="prop prop-waiting"><g class="hourglass"><path class="line" d="M89 76h18M89 103h18"/><path d="M92 76q0 9 6 13.5 6-4.5 6-13.5ZM92 103q0-9 6-13.5 6 4.5 6 13.5Z"/><path class="ink" d="M94.5 100.5q3.5-5 7 0Z"/></g></g>',
         '<g class="prop prop-ended"><path class="z line" d="M88 32h7l-7 8h7"/><path class="z z2 line" d="M100 18h9l-9 10h9"/></g>',
-        '<g class="prop prop-error"><g class="alarm"><path d="M98 75 111 99H85Z"/><path class="line" d="M98 83v8"/><circle class="ink" cx="98" cy="95" r="1.3"/></g></g>'
+        '<g class="prop prop-error"><g class="alarm"><path d="M98 75 111 99H85Z"/><path class="line" d="M98 83v8"/><circle class="ink" cx="98" cy="95" r="1.3"/></g></g>',
+        '<g class="prop prop-browser"><rect x="80" y="76" width="35" height="27" rx="3"/><path class="line" d="M80 82h35M85 88h13M85 93h9M85 98h11"/><g class="ink"><circle cx="84" cy="79" r="1"/><circle cx="87.5" cy="79" r="1"/><circle cx="91" cy="79" r="1"/></g><g class="click"><path d="M104 87v12.5l3-2.7 2.3 4.8 2.3-1.1-2.3-4.7h4.2Z"/></g></g>',
+        '<g class="prop prop-timer"><path class="line" d="M95 74h7M98.5 74v4"/><circle cx="98.5" cy="90" r="12"/><path class="line" d="M98.5 80.5v2M98.5 97.5v2M89 90h2M106 90h2"/><path class="hand line" d="M98.5 83v14" stroke-dasharray="7 7"/><circle class="ink" cx="98.5" cy="90" r="1.4"/></g>',
+        '<g class="prop prop-done"><path class="spark ink" d="m96 14 2 4.6 4.6 2-4.6 2-2 4.6-2-4.6-4.6-2 4.6-2Z"/><path class="spark s2 ink" d="m22 24 1.6 3.6 3.6 1.6-3.6 1.6-1.6 3.6-1.6-3.6-3.6-1.6 3.6-1.6Z"/><path class="spark s3 ink" d="m103 88 1.4 3.2 3.2 1.4-3.2 1.4-1.4 3.2-1.4-3.2-3.2-1.4 3.2-1.4Z"/></g>',
+        '<g class="prop prop-interrupted"><path class="drop glass" d="M88 27q4.2 5.6 4.2 8.2a4.2 4.2 0 0 1-8.4 0q0-2.6 4.2-8.2Z"/><g class="sigh"><path class="line" d="M17 86q3-2.4 6 0t6 0"/><path class="line" d="M13 93q3-2.4 6 0t6 0"/></g></g>'
       ].join('');
     }
 
@@ -547,7 +594,7 @@ p, h1, h2, dl, dd { margin: 0; }
       const state = activities[kind] ? kind : 'external';
       const eye = (cls, x) => `<g class="${cls}"><rect class="eye" x="${x}" y="54.69" width="6.625" height="9.9375"/></g>`;
       const frameImages = colorFrames.length > 1 ? colorFrames.slice(1).map((src, i) => `<image class="color-frame" x="7" y="5" width="106" height="106" href="${src}" style="image-rendering:pixelated;animation-delay:${-(i + 1)}s"/>`).join('') : '';
-      return `<span class="mascot" data-state="${state}"${still ? ' data-still="true"' : ''} style="width:${size}px;height:${size}px" aria-hidden="true"><svg viewBox="0 0 120 124" xmlns="http://www.w3.org/2000/svg"><ellipse class="floor" cx="60" cy="117" rx="27" ry="3"/><g class="body"><g class="float-body"><image x="7" y="5" width="106" height="106" href="${pixelAsset}" style="image-rendering:pixelated"/>${frameImages}<g class="face"><g class="glance"><g class="eyes">${eye('eye-l', 46.75)}${eye('eye-r', 66.625)}</g></g><g class="glasses"><rect x="41.5" y="51" width="16.5" height="16.5" rx="2"/><rect x="62" y="51" width="16.5" height="16.5" rx="2"/><path d="M58 56h4m-20.5-1H37m41.5 0H83"/></g></g></g></g>${mascotProps()}</svg></span>`;
+      return `<span class="mascot" data-state="${state}"${still ? ' data-still="true"' : ''} style="width:${size}px;height:${size}px" aria-hidden="true"><svg viewBox="0 0 120 124" xmlns="http://www.w3.org/2000/svg"><ellipse class="floor" cx="60" cy="117" rx="27" ry="3"/><g class="body"><g class="float-body"><image x="7" y="5" width="106" height="106" href="${pixelAsset}" style="image-rendering:pixelated"/>${frameImages}<g class="face"><g class="glance"><g class="eyes">${eye('eye-l', 46.75)}${eye('eye-r', 66.625)}</g></g><g class="glasses"><rect x="41.5" y="51" width="16.5" height="16.5" rx="2"/><rect x="62" y="51" width="16.5" height="16.5" rx="2"/><path d="M58 56h4m-20.5-1H37m41.5 0H83"/></g><path class="expr happy" d="M46.6 62.4 50 57l3.4 5.4M66.5 62.4 69.9 57l3.4 5.4"/><path class="expr brows" d="M44.5 50.4 54.5 53.8M65.5 53.8l10-3.4"/></g></g></g>${mascotProps()}</svg></span>`;
     }
 
     // Troca o estado no SVG existente para a pose fazer transição; só redesenha
@@ -596,33 +643,51 @@ p, h1, h2, dl, dd { margin: 0; }
         if (!row) {
           row = document.createElement('li');
           row.dataset.agentId = String(agent.id);
-          row.innerHTML = '<span class="agent-avatar"></span><div class="agent-copy"><strong></strong><span></span><small></small></div><div class="agent-actions"><button type="button" class="icon-btn agent-stop" aria-label="Parar subagente" title="Parar subagente"><svg class="icon" aria-hidden="true"><use href="#i-stop"/></svg></button><button type="button" class="agent-stop-confirm" aria-label="Confirmar parada do subagente" title="Confirmar parada">Parar</button><button type="button" class="icon-btn agent-stop-cancel" aria-label="Cancelar parada" title="Cancelar"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>';
+          row.innerHTML = '<span class="agent-avatar"></span><div class="agent-copy"><strong><b></b><em class="agent-tag" hidden></em></strong><span></span><small></small></div><div class="agent-actions"><button type="button" class="icon-btn agent-stop" aria-label="Parar subagente" title="Parar subagente"><svg class="icon" aria-hidden="true"><use href="#i-stop"/></svg></button><button type="button" class="agent-stop-confirm" aria-label="Confirmar parada do subagente" title="Confirmar parada">Parar</button><button type="button" class="icon-btn agent-stop-cancel" aria-label="Cancelar parada" title="Cancelar"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>';
           list.append(row);
         } else {
           existingRows.delete(String(agent.id));
         }
 
+        // Parada pelo painel ou pelo app = interrompido; fim normal = concluído.
+        const interrupted = isCancelled || agent.killed === true || agent.status === 'cancelled';
+        const id = String(agent.id);
+        if (row.dataset.status === 'running' && !isRunning) {
+          rowReactions.set(id, Date.now() + REACTION_MS);
+          setTimeout(syncSubagentsList, REACTION_MS + 50);
+        }
+        const reacting = !isRunning && (rowReactions.get(id) || 0) > Date.now();
+        if (isRunning || !reacting) rowReactions.delete(id);
         row.dataset.depth = String(agent.depth || 1);
-        row.dataset.status = isCancelled ? 'cancelled' : agent.status;
-        setMascot(row.querySelector('.agent-avatar'), isRunning ? agent.kind : 'ended', 36, !isRunning);
+        row.dataset.status = isRunning ? 'running' : interrupted ? 'cancelled' : 'completed';
+        setMascot(row.querySelector('.agent-avatar'), isRunning ? agent.kind : interrupted ? 'interrupted' : 'done', 36, !isRunning && !reacting);
 
         const ctx = agent.context || {};
         const usage = typeof ctx.tokens === 'number'
           ? `${formatNumber(ctx.tokens)}${typeof ctx.pct === 'number' ? ` · ${ctx.pct}%` : ''}`
           : '';
-        const detail = [isCancelled ? 'Cancelado' : isRunning ? agent.detail : 'Sem execução ativa', usage].filter(Boolean).join(' · ');
+        const detail = [isRunning ? agent.detail : interrupted ? 'Interrompido' : 'Concluído', usage].filter(Boolean).join(' · ');
 
-        row.querySelector('.agent-copy > strong').textContent = agent.name || 'Subagente';
+        // Lista plana como a Overview: sem recuo; um neto diz de quem é.
+        const parent = (agent.depth || 1) > 1 ? activeSubagents.find(item => String(item.id) === String(agent.parentId)) : null;
+        const tag = row.querySelector('.agent-tag');
+        tag.hidden = (agent.depth || 1) < 2;
+        tag.textContent = parent?.name ? `sub de ${parent.name}` : 'sub-subagente';
+        tag.title = 'Subagente chamado por outro subagente';
+        row.querySelector('.agent-copy > strong > b').textContent = agent.name || 'Subagente';
         row.querySelector('.agent-copy > span').textContent = agent.task || (isRunning ? 'Processando' : 'Sem execução ativa');
         row.querySelector('.agent-copy > small').textContent = detail;
         const isPending = pendingStop === String(agent.id) && isRunning;
         row.querySelector('.agent-stop').hidden = !isRunning || isPending;
         row.querySelector('.agent-stop-confirm').hidden = !isPending;
         row.querySelector('.agent-stop-cancel').hidden = !isPending;
-        row.title = [agent.name, agent.task, detail].filter(Boolean).join(' — ');
+        row.title = [agent.name, tag.hidden ? '' : tag.textContent, agent.task, detail].filter(Boolean).join(' — ');
       }
 
-      for (const oldRow of existingRows.values()) oldRow.remove();
+      for (const oldRow of existingRows.values()) {
+        rowReactions.delete(oldRow.dataset.agentId);
+        oldRow.remove();
+      }
     }
 
     function cancelStop() {
@@ -771,6 +836,10 @@ p, h1, h2, dl, dd { margin: 0; }
         lastRenderedKind = kind;
         lastRenderedDetail = detail;
       }
+
+      // Pose transitória (concluído, interrompido, erro): busca de novo quando assentar.
+      if (settleTimer) clearTimeout(settleTimer);
+      settleTimer = data.settleMs > 0 ? setTimeout(fetchStats, data.settleMs + 150) : null;
 
       activeSubagents = Array.isArray(data.subagents) ? data.subagents : [];
       for (const id of [...cancelledAgents]) {

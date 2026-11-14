@@ -109,11 +109,119 @@ console.log('3. Validando máquina de estados contra duplicações e reordenaç�
   model.receive('PreInvocation', { conversationId: 'test-session-2' })
   assert.equal(model.snapshot().kind, 'model')
 
-  // Stop normal
+  // Stop normal: pose "Concluído" transitória (o assentamento é testado abaixo)
   model.receive('Stop', { conversationId: 'test-session-2', terminationReason: 'NO_TOOL_CALL', fullyIdle: true })
-  assert.equal(model.snapshot().kind, 'idle')
+  assert.equal(model.snapshot().kind, 'done')
+  assert.equal(model.snapshot().activeCount, 0)
 }
 console.log('   ✓ Concorrência, reordenação e recuperação comprovadas.')
+
+// 3b. Stop/terminationReason reais, assentamento e erro curto de ferramenta
+console.log('3b. Validando reações de Stop e assentamento...')
+{
+  let clock = Date.parse('2026-11-14T12:00:00Z')
+  const now = () => clock
+  const stamp = () => new Date(clock).toISOString()
+  const stopCase = (reason, extra = {}) => {
+    const m = createActivityModel('stop', { now })
+    m.receive('PreToolUse', { conversationId: 'stop', stepIdx: 1, toolCall: { name: 'run_command' }, timestamp: stamp() })
+    return { m, snap: m.receive('Stop', { conversationId: 'stop', terminationReason: reason, fullyIdle: true, timestamp: stamp(), ...extra }) }
+  }
+
+  const cases = [
+    ['NO_TOOL_CALL', 'done'],
+    ['USER_CANCELED', 'interrupted'],
+    ['USER_CANCELLED', 'interrupted'],
+    ['CANCELED', 'interrupted'],
+    ['EXECUTOR_TERMINATION_REASON_USER_CANCELED', 'interrupted'],
+    ['ERROR', 'error'],
+    ['MAX_INVOCATIONS', 'ended'],
+    ['MAX_FORCED_INVOCATIONS', 'ended'],
+    ['TERMINAL_STEP_TYPE', 'ended'],
+    ['TERMINAL_CUSTOM_HOOK', 'ended'],
+    ['', 'ended'],
+  ]
+  for (const [reason, expected] of cases) {
+    const { snap } = stopCase(reason)
+    assert.equal(snap.kind, expected, `Stop ${reason || '(vazio)'} → ${expected}`)
+    assert.equal(snap.activeCount, 0, 'Stop limpa chamadas ativas')
+    assert.ok(snap.settleMs > 5000 && snap.settleMs <= 6000, 'transitória de ~6 s')
+  }
+  // Cancelamento vence o campo error; error preenchido sem motivo vira erro.
+  assert.equal(stopCase('USER_CANCELED', { error: 'canceled by user' }).snap.kind, 'interrupted')
+  assert.equal(stopCase('NO_TOOL_CALL', { error: 'boom' }).snap.kind, 'error')
+
+  // Assenta: concluído → idle; interrompido com background → waiting.
+  {
+    const { m } = stopCase('NO_TOOL_CALL')
+    clock += 6001
+    assert.equal(m.snapshot().kind, 'idle')
+    assert.equal(m.snapshot().settleMs, 0)
+    clock -= 6001
+  }
+  {
+    const m = createActivityModel('bg', { now })
+    m.receive('Stop', { conversationId: 'bg', terminationReason: 'USER_CANCELED', fullyIdle: false, timestamp: stamp() })
+    assert.equal(m.snapshot().kind, 'interrupted')
+    assert.ok(m.snapshot().detail.includes('segundo plano'))
+    clock += 6001
+    assert.equal(m.snapshot().kind, 'waiting')
+    clock -= 6001
+  }
+
+  // O mesmo Stop relido do activity-state.json não reacende a pose.
+  {
+    const m = createActivityModel('replay', { now })
+    const stop = { conversationId: 'replay', terminationReason: 'NO_TOOL_CALL', fullyIdle: true, timestamp: stamp() }
+    m.receive('Stop', stop)
+    clock += 6001
+    assert.equal(m.receive('Stop', stop).kind, 'idle', 'replay do mesmo Stop é ignorado')
+    // Stop antigo num modelo novo (servidor reiniciado) já nasce assentado.
+    assert.equal(createActivityModel('replay', { now }).receive('Stop', stop).kind, 'idle')
+    clock -= 6001
+  }
+
+  // Erro de ferramenta: aviso curto e volta para waiting.
+  {
+    const m = createActivityModel('tool-err', { now })
+    m.receive('PreToolUse', { conversationId: 'tool-err', stepIdx: 3, toolCall: { name: 'read_file' }, timestamp: stamp() })
+    const snap = m.receive('PostToolUse', { conversationId: 'tool-err', stepIdx: 3, toolCall: { name: 'read_file' }, error: 'ENOENT', timestamp: stamp() })
+    assert.equal(snap.kind, 'error')
+    assert.ok(snap.settleMs > 0 && snap.settleMs <= 4000)
+    clock += 4001
+    assert.equal(m.snapshot().kind, 'waiting')
+    clock -= 4001
+    // PostToolUse sem erro (string vazia) não é erro.
+    m.receive('PreToolUse', { conversationId: 'tool-err', stepIdx: 4, toolCall: { name: 'read_file' }, timestamp: stamp() })
+    assert.equal(m.receive('PostToolUse', { conversationId: 'tool-err', stepIdx: 4, toolCall: { name: 'read_file' }, error: '' }).kind, 'waiting')
+  }
+
+  // Eventos → animação.
+  {
+    const m = createActivityModel('flow', { now })
+    assert.equal(m.receive('SessionStart', { conversationId: 'flow' }).kind, 'idle')
+    assert.equal(m.receive('PreInvocation', { conversationId: 'flow', invocationNum: 1 }).kind, 'model')
+    assert.equal(m.receive('PostInvocation', { conversationId: 'flow', invocationNum: 1 }).kind, 'waiting')
+  }
+
+  // Mapeamento das ferramentas reais do transcript.
+  const kinds = {
+    read_file: 'reading', view_file: 'reading',
+    write_file: 'writing', edit_file: 'writing', write_to_file: 'writing', replace_file_content: 'writing', multi_replace_file_content: 'writing',
+    grep_search: 'files', find_by_name: 'files', list_dir: 'files', list_resources: 'files',
+    search_web: 'web', read_url_content: 'page', webview_browser: 'browser',
+    run_command: 'terminal', manage_task: 'terminal',
+    invoke_subagent: 'agents', manage_subagents: 'agents', define_subagent: 'agents', send_message: 'agents', swarm: 'agents', swarm_spawn: 'agents', run_workflow: 'agents',
+    ask_question: 'question', ask_permission: 'question', generate_image: 'image', schedule: 'timer',
+    list_permissions: 'external', list_plugin_accounts: 'external', search_marketplace: 'external', call_mcp_tool: 'external', mcp_github_search: 'external',
+  }
+  for (const [name, kind] of Object.entries(kinds)) assert.equal(classifyTool(name), kind, `${name} → ${kind}`)
+  assert.equal(describeCall({ name: 'webview_browser', args: { Url: 'https://example.com/a?token=x' } }), 'Navegador: example.com')
+  assert.equal(describeCall({ name: 'mcp_github_search' }), 'MCP: github_search')
+  // Payload sanitizado do coletor (sem args) mantém o detalhe calculado no hook.
+  assert.equal(describeCall({ name: 'read_file', kind: 'reading', detail: 'Arquivo: index.js' }), 'Arquivo: index.js')
+}
+console.log('   ✓ Concluído, interrompido, erro, encerrado e assentamento comprovados.')
 
 // 4. Isolamento estrito de sessão
 console.log('4. Validando isolamento de sessões...')

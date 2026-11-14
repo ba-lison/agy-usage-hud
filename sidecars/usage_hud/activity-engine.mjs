@@ -8,6 +8,8 @@ export const TOOL_KINDS = {
   search_web: 'web',
   // Page reading
   read_url_content: 'page',
+  // Navegador embutido (237 chamadas no transcript real; não é ferramenta genérica)
+  webview_browser: 'browser',
   // File viewing / reading
   view_file: 'reading',
   read_file: 'reading',
@@ -15,6 +17,7 @@ export const TOOL_KINDS = {
   list_dir: 'files',
   find_by_name: 'files',
   grep_search: 'files',
+  list_resources: 'files',
   // File editing / writing
   write_to_file: 'writing',
   replace_file_content: 'writing',
@@ -27,11 +30,19 @@ export const TOOL_KINDS = {
   // Subagents
   invoke_subagent: 'agents',
   manage_subagents: 'agents',
+  define_subagent: 'agents',
+  send_message: 'agents',
+  swarm: 'agents',
+  run_workflow: 'agents',
   // User interaction
   ask_question: 'question',
   ask_permission: 'question',
   // Generation
   generate_image: 'image',
+  // Timer / trabalho em segundo plano
+  schedule: 'timer',
+  // Genéricas: list_permissions, list_plugin_accounts, search_marketplace,
+  // call_mcp_tool e mcp_* caem em 'external' (ver classifyTool).
 }
 
 export const ACTIVITIES = {
@@ -115,6 +126,32 @@ export const ACTIVITIES = {
     detail: 'O modelo está preparando a próxima resposta.',
     glyph: '<g class="thought-bubble"><path d="M85 13h23q7 0 7 7v9q0 7-7 7H85q-7 0-7-7v-9q0-7 7-7Z"/><circle cx="79" cy="41" r="3"/><circle cx="74" cy="47" r="1.8"/></g><g fill="currentColor" stroke="none"><circle class="thought-dot" cx="88" cy="25" r="1.5"/><circle class="thought-dot" cx="97" cy="25" r="1.5"/><circle class="thought-dot" cx="106" cy="25" r="1.5"/></g>'
   },
+  browser: {
+    label: 'Usando o navegador',
+    title: 'Navegando numa página.',
+    detail: 'Ação no navegador solicitada.',
+    tool: 'webview_browser',
+    glyph: ''
+  },
+  timer: {
+    label: 'Timer em segundo plano',
+    title: 'Esperando o timer.',
+    detail: 'Aguardando um timer ou tarefa em segundo plano.',
+    tool: 'schedule',
+    glyph: ''
+  },
+  done: {
+    label: 'Concluído',
+    title: 'Tarefa concluída.',
+    detail: 'Turno concluído. Aguardando sua próxima mensagem.',
+    glyph: ''
+  },
+  interrupted: {
+    label: 'Interrompido',
+    title: 'A execução foi interrompida.',
+    detail: 'Você interrompeu a execução.',
+    glyph: ''
+  },
   waiting: {
     label: 'Aguardando próxima ação',
     title: 'A chamada retornou.',
@@ -137,7 +174,38 @@ export const ACTIVITIES = {
 
 export function classifyTool(name) {
   if (typeof name !== 'string') return 'external'
-  return Object.hasOwn(TOOL_KINDS, name) ? TOOL_KINDS[name] : 'external'
+  if (Object.hasOwn(TOOL_KINDS, name)) return TOOL_KINDS[name]
+  if (name.startsWith('swarm_')) return 'agents'
+  return 'external'
+}
+
+// Pose transitória (concluído, interrompido, erro, encerrado) antes de assentar.
+export const SETTLE_MS = 6000
+// Erro de uma ferramenta: aviso curto e volta ao fluxo.
+export const TOOL_ERROR_MS = 4000
+
+const CANCEL_REASONS = new Set(['USER_CANCELED', 'USER_CANCELLED', 'CANCELED', 'CANCELLED'])
+const REASON_LABEL = {
+  MAX_INVOCATIONS: 'limite de invocações',
+  MAX_FORCED_INVOCATIONS: 'limite de invocações forçadas',
+  TERMINAL_STEP_TYPE: 'passo terminal',
+  TERMINAL_CUSTOM_HOOK: 'encerrado por hook',
+}
+
+// O hook entrega o enum EXECUTOR_TERMINATION_REASON_* sem o prefixo; aceita os dois.
+export function normalizeReason(raw) {
+  if (typeof raw !== 'string') return ''
+  return raw.trim().toUpperCase().replace(/^EXECUTOR_TERMINATION_REASON_/, '')
+}
+
+// Stop → reação: NO_TOOL_CALL é o fim normal; cancelamento vence erro; o resto
+// (limites, passo terminal, hook, motivo vazio) é "Turno encerrado", não "Concluído".
+export function stopReaction(reason, error) {
+  const r = normalizeReason(reason)
+  if (CANCEL_REASONS.has(r)) return 'interrupted'
+  if (r === 'ERROR' || (typeof error === 'string' && error.trim())) return 'error'
+  if (r === 'NO_TOOL_CALL') return 'done'
+  return 'ended'
 }
 
 export function sanitizeText(val, maxLen = 80) {
@@ -208,61 +276,109 @@ export function describeCall(call) {
   if (name === 'ask_question' || name === 'ask_permission') {
     return 'Aguardando sua confirmação ou resposta'
   }
+  if (name === 'webview_browser') {
+    const uStr = args.Url || args.url || ''
+    try {
+      const u = new URL(uStr)
+      if (['http:', 'https:'].includes(u.protocol)) return `Navegador: ${u.hostname}`
+    } catch {}
+    const action = sanitizeText(args.Action || args.action || args.toolSummary || '', 50)
+    if (action) return `Navegador: ${action}`
+  }
+  if (name === 'send_message') return 'Mensagem para um subagente'
+  if (name === 'define_subagent') return 'Definindo um subagente'
+  if (name === 'manage_subagents') {
+    const action = sanitizeText(args.Action || args.action || '')
+    if (action) return `Subagentes: ${action}`
+  }
+  if (name === 'call_mcp_tool') {
+    const server = sanitizeText(args.ServerName || args.serverName || args.server || '', 30)
+    const tool = sanitizeText(args.ToolName || args.toolName || args.tool || '', 40)
+    if (server || tool) return `MCP: ${[server, tool].filter(Boolean).join(' · ')}`
+    return 'Ferramenta MCP em execução'
+  }
+  if (name.startsWith('mcp_')) {
+    const tool = sanitizeText(name.slice(4), 50)
+    if (tool) return `MCP: ${tool}`
+  }
+
+  // O coletor do hook já guarda só o detalhe sanitizado (sem args); usa-o.
+  if (typeof call.detail === 'string' && call.detail.trim()) return sanitizeText(call.detail, 100)
 
   const kind = classifyTool(name)
   return ACTIVITIES[kind]?.detail || 'Executando ferramenta'
 }
 
-export function createActivityModel(conversationId) {
+export function createActivityModel(conversationId, options = {}) {
   if (typeof conversationId !== 'string' || !conversationId) {
     throw new TypeError('conversationId is required')
   }
+  const now = typeof options.now === 'function' ? options.now : () => Date.now()
+  const settleMs = Number.isFinite(options.settleMs) ? options.settleMs : SETTLE_MS
+  const toolErrorMs = Number.isFinite(options.toolErrorMs) ? options.toolErrorMs : TOOL_ERROR_MS
 
   const activeCalls = new Map()      // key: `${stepIdx}:${name}` -> { kind, detail, startedAt }
   const completedKeys = new Set()
-  let kind = 'idle'
-  let lastError = false
+  let kind = 'idle'                  // estado assentado
+  let transient = null               // { kind, detail, until }: pose curta antes de assentar
   let lastEvent = 'none'
+  let lastKey = ''
   let stopped = false
   let lastReturnedLabel = ''
   let customDetail = ''
   let terminationReason = ''
   let fullyIdle = true
 
-  function currentDetail() {
+  // Hora do evento: o carimbo do coletor quando plausível. Assim um Stop antigo
+  // relido do activity-state.json não reacende a pose de concluído.
+  function eventTime(payload) {
+    const t = now()
+    const at = typeof payload.timestamp === 'string' ? Date.parse(payload.timestamp) : NaN
+    return Number.isFinite(at) && at <= t + 1000 ? Math.min(at, t) : t
+  }
+
+  function setTransient(tKind, ms, detail, at) {
+    const until = at + ms
+    transient = until > now() ? { kind: tKind, detail, until } : null
+  }
+
+  function liveTransient() {
+    if (transient && now() >= transient.until) transient = null
+    return transient
+  }
+
+  function settledDetail() {
     if (customDetail) return customDetail
-    const running = [...activeCalls.values()]
-    if (running.length > 0) {
-      return running[running.length - 1].detail || ACTIVITIES[kind]?.detail || ''
-    }
+    if (kind === 'waiting' && stopped && !fullyIdle) return 'Ainda há tarefas em segundo plano.'
     if (kind === 'waiting' && lastReturnedLabel) {
       return `${lastReturnedLabel} retornou. Aguardando a próxima ação.`
-    }
-    if (kind === 'ended') {
-      if (terminationReason === 'NO_TOOL_CALL') return 'Aguardando sua próxima mensagem'
-      if (terminationReason) return `Sessão finalizada (${terminationReason})`
-      return 'Turno finalizado'
     }
     return ACTIVITIES[kind]?.detail || 'À disposição'
   }
 
   function snapshot() {
     const running = [...activeCalls.values()]
-    const activeKind = running.length > 0 ? running[running.length - 1].kind : kind
-    const effectiveKind = (running.length === 0 && stopped && !lastError) ? 'idle' : activeKind
+    const t = running.length > 0 ? null : liveTransient()
+    const effectiveKind = running.length > 0 ? running[running.length - 1].kind : t ? t.kind : kind
+    const detail = running.length > 0
+      ? running[running.length - 1].detail || ACTIVITIES[effectiveKind]?.detail || ''
+      : t ? t.detail : settledDetail()
 
     return {
       conversationId,
       kind: effectiveKind,
       label: ACTIVITIES[effectiveKind]?.label || ACTIVITIES.external.label,
       title: ACTIVITIES[effectiveKind]?.title || ACTIVITIES.external.title,
-      detail: currentDetail(),
+      detail,
       activeCount: activeCalls.size,
       lastEvent,
-      hasError: lastError,
+      hasError: effectiveKind === 'error',
       stopped,
       fullyIdle,
-      updatedAt: new Date().toISOString()
+      terminationReason,
+      // ms até a pose transitória assentar; 0 quando não há transitória.
+      settleMs: t ? Math.max(0, t.until - now()) : 0,
+      updatedAt: new Date(now()).toISOString()
     }
   }
 
@@ -273,7 +389,15 @@ export function createActivityModel(conversationId) {
     const validEvents = ['SessionStart', 'PreToolUse', 'PostToolUse', 'PreInvocation', 'PostInvocation', 'Stop']
     if (!validEvents.includes(event)) return snapshot()
 
+    // O mesmo evento chega pelo POST e, depois, pela releitura do arquivo de estado.
+    if (typeof payload.timestamp === 'string' && payload.timestamp) {
+      const key = `${event}|${payload.timestamp}|${payload.stepIdx ?? ''}|${payload.toolCall?.name ?? ''}`
+      if (key === lastKey) return snapshot()
+      lastKey = key
+    }
+
     lastEvent = event
+    const at = eventTime(payload)
 
     if (event === 'PreToolUse') {
       stopped = false
@@ -284,9 +408,10 @@ export function createActivityModel(conversationId) {
         if (!completedKeys.has(key)) {
           const tKind = classifyTool(name)
           const detail = describeCall(payload.toolCall)
-          activeCalls.set(key, { kind: tKind, detail, startedAt: Date.now() })
+          activeCalls.set(key, { kind: tKind, detail, startedAt: at })
           kind = tKind
-          customDetail = detail
+          transient = null
+          customDetail = ''
         }
       }
     } else if (event === 'PostToolUse') {
@@ -296,37 +421,48 @@ export function createActivityModel(conversationId) {
         const key = `${stepIdx}:${name}`
         activeCalls.delete(key)
         completedKeys.add(key)
-        const isErr = typeof payload.error === 'string' && payload.error.trim().length > 0
-        if (isErr) lastError = true
         lastReturnedLabel = ACTIVITIES[classifyTool(name)]?.label || name
-        kind = lastError ? 'error' : (activeCalls.size > 0 ? [...activeCalls.values()].pop().kind : 'waiting')
+        kind = activeCalls.size > 0 ? [...activeCalls.values()].pop().kind : 'waiting'
         customDetail = ''
+        const isErr = typeof payload.error === 'string' && payload.error.trim().length > 0
+        if (isErr) setTransient('error', toolErrorMs, `${lastReturnedLabel} retornou um erro.`, at)
       }
     } else if (event === 'SessionStart') {
       stopped = false
-      lastError = false
+      activeCalls.clear()
+      transient = null
       kind = 'idle'
       customDetail = ''
+      terminationReason = ''
+      fullyIdle = true
     } else if (event === 'PreInvocation') {
       stopped = false
       if (activeCalls.size === 0) {
         kind = 'model'
-        lastError = false
+        transient = null
         customDetail = 'O modelo está preparando a próxima resposta'
       }
     } else if (event === 'PostInvocation') {
       if (activeCalls.size === 0) {
-        kind = lastError ? 'error' : 'waiting'
+        kind = 'waiting'
         customDetail = ''
       }
     } else if (event === 'Stop') {
       activeCalls.clear()
       stopped = true
-      terminationReason = typeof payload.terminationReason === 'string' ? payload.terminationReason : ''
+      terminationReason = normalizeReason(payload.terminationReason)
       fullyIdle = payload.fullyIdle !== false
-      if (payload.error) lastError = true
-      kind = lastError ? 'error' : (fullyIdle ? 'idle' : 'waiting')
+      kind = fullyIdle ? 'idle' : 'waiting'
       customDetail = ''
+      const reaction = stopReaction(terminationReason, payload.error)
+      const background = fullyIdle ? '' : ' Ainda há tarefas em segundo plano.'
+      const detail = {
+        done: fullyIdle ? ACTIVITIES.done.detail : `Turno concluído.${background}`,
+        interrupted: `Você interrompeu a execução.${background}`,
+        error: `O turno terminou com erro.${background}`,
+        ended: `Turno encerrado: ${REASON_LABEL[terminationReason] || terminationReason || 'motivo não informado'}.${background}`,
+      }[reaction]
+      setTransient(reaction, settleMs, detail, at)
     }
 
     return snapshot()

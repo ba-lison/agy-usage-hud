@@ -421,6 +421,7 @@ export function childInfo(row, parentWindow, now = Date.now()) {
     kind: running ? (activeCall ? classifyTool(activeCall.name) : 'agents') : 'ended',
     status: running ? 'running' : 'idle',
     depth: row.relative_depth ?? 1,
+    parentId: typeof row.parent_conversation_id === 'string' ? row.parent_conversation_id : null,
     killed: Boolean(row.killed),
     lastSeen: modifiedAt ? new Date(modifiedAt).toISOString() : null,
     lastSeenMs: modifiedAt,

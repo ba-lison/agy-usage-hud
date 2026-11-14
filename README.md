@@ -74,7 +74,7 @@ O painel lê as variáveis que o Antigravity envia ao sidecar no evento `theme-c
 
 Os cartões têm raio de 12 px e borda de 1 px; botões usam 8 px e os contadores são pílulas. A fonte é a Google Sans Flex, embutida no HTML, com base de 16 px. O anel da cota troca o `--primary` pelo `--warning` a partir de 80% e pelo `--error` a partir de 95%.
 
-A prévia [`propostas/nativo-2026-11-15/index.html`](propostas/nativo-2026-11-15/index.html) abre direto no navegador, sem servidor. Ela mostra o painel em 472 px com dados fictícios, as 15 reações do Sparky e um seletor claro/escuro que existe só na prévia.
+A prévia [`propostas/nativo-2026-11-15/index.html`](propostas/nativo-2026-11-15/index.html) abre direto no navegador, sem servidor. Ela mostra o painel em 472 px com dados fictícios, as 19 reações do Sparky e um seletor claro/escuro que existe só na prévia.
 
 O painel não abre sozinho ao iniciar o app: o `sidecar.json` não tem campo de auto-open e o Antigravity abre o Overview nativo por padrão. O HUD abre pela linha **Extensions** ou pela aba do painel lateral; se a aba estava aberta ao fechar, o app pode restaurá-la, mas não há garantia documentada.
 
@@ -82,15 +82,16 @@ O painel não abre sozinho ao iniciar o app: o `sidecar.json` não tem campo de 
 
 Sparky é a estrelinha colorida com olhos de bloco que acompanha a sessão. As expressões, os acessórios e os movimentos ajudam a reconhecer a atividade sem precisar ler cada chamada de ferramenta.
 
-<p align="center"><img src="assets/sparky-reacoes.png" alt="As 15 reações do Sparky em grade: à disposição, pesquisa na web, lendo uma página, lendo um arquivo, buscando no projeto, editando arquivo, comando no terminal, coordenando subagentes, pergunta, gerando imagem, usando ferramenta, pensando, aguardando, turno encerrado e erro" width="540"></p>
+<p align="center"><img src="assets/sparky-reacoes.png" alt="As 19 reações do Sparky em grade: à disposição, pesquisa na web, lendo uma página, usando o navegador, lendo um arquivo, buscando no projeto, editando arquivo, comando no terminal, coordenando subagentes, pergunta, gerando imagem, usando ferramenta, pensando, timer em segundo plano, aguardando, turno encerrado, concluído, interrompido e erro" width="540"></p>
 
-As 15 reações, uma por estado do `activity-engine`, capturadas da prévia. Lá elas estão animadas e, ao clicar numa delas, o painel faz a transição para aquele estado.
+As 19 reações, uma por estado do `activity-engine`, capturadas da prévia. Lá elas estão animadas e, ao clicar numa delas, o painel faz a transição para aquele estado. Concluído, Interrompido, Erro e Turno encerrado são transitórios: duram cerca de 6 s e assentam em À disposição (ou em Aguardando, se o `Stop` vier com `fullyIdle:false`).
 
 | Reação | Quando aparece | O que muda no Sparky |
 | --- | --- | --- |
 | À disposição | Aguardando a próxima mensagem | Olhos abertos, piscadas, flutuação suave e, de vez em quando, um olhar para os lados. |
 | Pensando | O modelo prepara a próxima resposta | O corpo sobe e inclina, os olhos semicerrados olham para cima e aparece um balão com três pontos. |
 | Pesquisa na web | Chamada de `search_web` | Inclina na direção de um globo que gira, com o olhar percorrendo o ambiente. |
+| Usando o navegador | Chamada de `webview_browser` | Janela de navegador com um cursor que vai até o link e clica. |
 | Lendo uma página | Chamada de `read_url_content` | Óculos, olhos menores e uma janela de navegador com uma faixa que desce pelas linhas. |
 | Lendo um arquivo | Chamada de `read_file` ou `view_file` | Óculos, olhar que acompanha as linhas e uma lupa passando pela folha. |
 | Buscando no projeto | Busca ou listagem de arquivos | Um olho mais fechado, olhar inquieto e lupa sobre uma pasta. |
@@ -100,9 +101,12 @@ As 15 reações, uma por estado do `activity-engine`, capturadas da prévia. Lá
 | Pergunta para você | Pergunta ou pedido de permissão | Cabeça inclinada, olhos assimétricos e um balão com interrogação que pulsa. |
 | Gerando imagem | Chamada de `generate_image` | Olhos bem abertos, uma moldura com paisagem e um brilho que pisca. |
 | Usando ferramenta | Ferramenta sem reação própria | Duas engrenagens girando em sentidos opostos. |
+| Timer em segundo plano | Chamada de `schedule` | Corpo baixo, flutuação lenta e um cronômetro com o ponteiro girando. |
 | Aguardando próxima ação | Uma chamada retornou e a sessão aguarda o próximo passo | Corpo mais baixo, flutuação lenta e uma ampulheta que vira. |
-| Turno encerrado | Fim do turno e linhas de subagentes sem execução ativa | Olhos fechados, corpo em repouso e um "z" subindo. Não confirma que a tarefa deu certo. |
-| Erro na ferramenta | O evento recebido informa erro | Treme três vezes e assenta, com olhos desiguais e um triângulo de alerta piscando. |
+| Turno encerrado | `Stop` com fim não normal (`MAX_INVOCATIONS`, `MAX_FORCED_INVOCATIONS`, `TERMINAL_STEP_TYPE`, `TERMINAL_CUSTOM_HOOK` ou sem motivo) | Olhos fechados, corpo em repouso e um "z" subindo. Não confirma que a tarefa deu certo. |
+| Concluído | `Stop` com `NO_TOOL_CALL` e linhas de subagentes que terminaram | Três pulinhos, olhos felizes (^ ^) e faíscas piscando. |
+| Interrompido | `Stop` com `USER_CANCELED` e subagente parado pelo painel ou pelo app | Treme de raiva, sobrancelhas franzidas, olhos apertados, uma gota escorrendo e um suspiro. |
+| Erro na ferramenta | `PostToolUse` com `error` preenchido (cerca de 4 s) ou `Stop` com `ERROR` | Treme três vezes e assenta, com olhos desiguais e um triângulo de alerta piscando. |
 
 O movimento de base combina flutuação em ciclos de 4 segundos, oito quadros de variação de cores em 8 segundos e piscadas em ciclos de 6,5 segundos. Na troca de estado o SVG continua o mesmo: pose, olhar e acessório mudam com uma transição curta, sem o mascote sumir e reaparecer. A sombra acompanha a flutuação. Esses movimentos não representam percentual de cota nem comprovam, por si só, uma tarefa em execução.
 

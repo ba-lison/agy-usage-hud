@@ -335,6 +335,20 @@ p, h1, h2, dl, dd { margin: 0; }
 .agent-copy strong { display: block; font-weight: 500; font-size: 11.5px; }
 .agent-copy span { display: block; font-size: 11px; color: var(--hud-muted); }
 .agent-copy small { display: block; font-size: 10px; color: var(--hud-faint); margin-top: 1px; }
+.agent-stop {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border: 1px solid var(--hud-outline);
+  border-radius: 50%;
+  background: var(--hud-surface);
+  display: grid;
+  place-items: center;
+  color: var(--hud-muted);
+  transition: background-color 0.15s, color 0.15s;
+}
+.agent-stop:hover:not(:disabled) { background: var(--hud-surface-high); color: var(--hud-ink); }
+.agent-stop .icon { width: 13px; height: 13px; }
 /* Metrics Grid */
 .metrics-grid {
   display: grid;
@@ -482,6 +496,7 @@ p, h1, h2, dl, dd { margin: 0; }
     <symbol id="i-context" viewBox="0 0 24 24"><path d="m3 8 9-5 9 5-9 5-9-5Zm0 4 9 5 9-5M3 16l9 5 9-5"/></symbol>
     <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 10 7-10 7Z"/></symbol>
     <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 6v12M16 6v12"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5"/></symbol>
   </svg>
 
   <div class="dashboard">
@@ -594,6 +609,7 @@ p, h1, h2, dl, dd { margin: 0; }
     let agentsCollapsed = false;
     let currentConversationId = null;
     let activeSubagents = [];
+    const cancelledAgents = new Set();
 
     async function preparePixel() {
       if (!GOOGLE_ASSET) return;
@@ -670,7 +686,7 @@ p, h1, h2, dl, dd { margin: 0; }
       }
 
       section.hidden = false;
-      const runningCount = activeSubagents.filter(a => a.status === 'running').length;
+      const runningCount = activeSubagents.filter(a => a.status === 'running' && !cancelledAgents.has(String(a.id))).length;
       document.getElementById('agents-summary').textContent = `Subagentes · ${runningCount}/${activeSubagents.length} ativos`;
       toggle.textContent = agentsCollapsed ? 'Mostrar' : 'Ocultar';
       toggle.setAttribute('aria-expanded', String(!agentsCollapsed));
@@ -684,21 +700,23 @@ p, h1, h2, dl, dd { margin: 0; }
 
       for (const agent of activeSubagents) {
         let row = existingRows.get(String(agent.id));
-        const isRunning = agent.status === 'running';
+        const isCancelled = cancelledAgents.has(String(agent.id));
+        const isRunning = agent.status === 'running' && !isCancelled;
 
         if (!row) {
           row = document.createElement('li');
           row.dataset.agentId = String(agent.id);
-          row.innerHTML = '<span class="agent-avatar"></span><div class="agent-copy"><strong></strong><span></span><small></small></div>';
+          row.innerHTML = '<span class="agent-avatar"></span><div class="agent-copy"><strong></strong><span></span><small></small></div><button type="button" class="agent-stop" aria-label="Parar subagente" title="Parar subagente"><svg class="icon" aria-hidden="true"><use href="#i-stop"/></svg></button>';
           list.append(row);
         } else {
           existingRows.delete(String(agent.id));
         }
 
         row.dataset.depth = String(agent.depth || 1);
-        if (row.dataset.status !== agent.status || row.dataset.kind !== agent.kind) {
+        const visualStatus = isCancelled ? 'cancelled' : agent.status;
+        if (row.dataset.status !== visualStatus || row.dataset.kind !== agent.kind) {
           row.querySelector('.agent-avatar').innerHTML = mascot(isRunning ? agent.kind : 'ended', 36, !isRunning);
-          row.dataset.status = agent.status;
+          row.dataset.status = visualStatus;
           row.dataset.kind = agent.kind;
         }
 
@@ -706,17 +724,43 @@ p, h1, h2, dl, dd { margin: 0; }
         const usage = typeof ctx.tokens === 'number'
           ? `${formatNumber(ctx.tokens)}${typeof ctx.pct === 'number' ? ` · ${ctx.pct}%` : ''}`
           : '';
-        const detail = [isRunning ? agent.detail : 'Sem execução ativa', usage].filter(Boolean).join(' · ');
+        const detail = [isCancelled ? 'Cancelado' : isRunning ? agent.detail : 'Sem execução ativa', usage].filter(Boolean).join(' · ');
 
         row.querySelector('.agent-copy > strong').textContent = agent.name || 'Subagente';
         row.querySelector('.agent-copy > span').textContent = agent.task || (isRunning ? 'Processando' : 'Sem execução ativa');
         row.querySelector('.agent-copy > small').textContent = detail;
+        row.querySelector('.agent-stop').hidden = !isRunning;
         row.title = [agent.name, agent.task, detail].filter(Boolean).join(' — ');
       }
 
       // Remove deleted agents
       for (const [_, oldRow] of existingRows.entries()) {
         oldRow.remove();
+      }
+    }
+
+    async function stopAgent(agent) {
+      const id = String(agent.id);
+      const parent = currentConversationId;
+      if (!parent) {
+        document.getElementById('session-sub').textContent = 'Falha ao parar: conversa não identificada';
+        return;
+      }
+      cancelledAgents.add(id);
+      syncSubagentsList();
+      try {
+        const res = await fetch('/api/subagents/stop', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ conversationId: parent, agentId: id }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.ok === false) throw new Error(data.message || `HTTP ${res.status}`);
+        setTimeout(fetchStats, 800);
+      } catch (err) {
+        cancelledAgents.delete(id);
+        syncSubagentsList();
+        document.getElementById('session-sub').textContent = `Falha ao parar: ${err.message}`;
       }
     }
 
@@ -838,6 +882,9 @@ p, h1, h2, dl, dd { margin: 0; }
       }
 
       activeSubagents = Array.isArray(data.subagents) ? data.subagents : [];
+      for (const id of [...cancelledAgents]) {
+        if (!activeSubagents.some(agent => String(agent.id) === id)) cancelledAgents.delete(id);
+      }
       syncSubagentsList();
     }
 
@@ -948,6 +995,14 @@ p, h1, h2, dl, dd { margin: 0; }
       document.getElementById('toggle-agents').addEventListener('click', () => {
         agentsCollapsed = !agentsCollapsed;
         syncSubagentsList();
+      });
+
+      document.getElementById('agent-list').addEventListener('click', event => {
+        const button = event.target.closest('.agent-stop');
+        if (!button) return;
+        const row = button.closest('li');
+        const agent = activeSubagents.find(item => String(item.id) === row?.dataset.agentId);
+        if (agent) stopAgent(agent);
       });
 
       // 4. Initial Theme & Motion: sem botão, segue o sistema se não houver escolha salva.

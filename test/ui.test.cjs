@@ -37,7 +37,7 @@ let activity = { kind: 'agents', label: 'Coordenando subagentes', detail: '1 de 
       if (url.pathname === '/preload.js') return route.fulfill({ contentType: 'application/javascript', body: preload });
       if (url.pathname === '/api/stats') return json(stats);
       if (url.pathname === '/api/activity') return json(activity);
-      if (url.pathname === '/api/subagents/stop') { stopEndpointCalls++; return json({ ok: false, status: 'unsupported' }); }
+      if (url.pathname === '/api/subagents/stop') { stopEndpointCalls++; return json({ ok: true }); }
       if (url.pathname === '/_sidecar/get-conversation-metadata') return json({ metadata: {} });
       return route.fulfill({ status: 204 });
     });
@@ -109,10 +109,13 @@ let activity = { kind: 'agents', label: 'Coordenando subagentes', detail: '1 de 
     assert.equal(await page.locator('#agent-list').isVisible(), false);
     await page.locator('#toggle-agents').click();
     assert.equal(await page.locator('.agent-avatar .mascot').count(), 1);
-    assert.equal(await page.locator('#stop-agents,.stop-agent,#stop-request,#stop-request-text').count(), 0);
-    assert.equal(await page.locator('#agent-list button').count(), 0);
+    assert.equal(await page.locator('.agent-stop').count(), 1, 'Running subagent must have a stop button');
+    assert.equal(await page.locator('.agent-stop').getAttribute('title'), 'Parar subagente');
     assert.ok(!/navigator\.clipboard|copyStopRequest|Parar pelo chat/.test(ui));
-    assert.equal(stopEndpointCalls, 0, 'Read-only agent tracking must not call the stop endpoint');
+    await page.locator('.agent-stop').click();
+    await page.waitForTimeout(150);
+    assert.equal(stopEndpointCalls, 1, 'Clicking stop must call the stop endpoint');
+    assert.equal(await page.locator('.agent-stop').isVisible(), false, 'Stop button disappears after the click');
 
     await page.setViewportSize({ width: 320, height: 862 });
     await page.evaluate(sample => {
@@ -127,7 +130,7 @@ let activity = { kind: 'agents', label: 'Coordenando subagentes', detail: '1 de 
     assert.equal(await page.locator('#companion-slot .float-body').evaluate(el => getComputedStyle(el).animationName), 'none');
     assert.deepEqual(errors, []);
     assert.deepEqual(external, []);
-    fs.writeFileSync(path.join(output, 'verificacao.json'), JSON.stringify({ realAntigravityPreload: true, demoData: true, stopAndCopyControlsAbsent: true, stopEndpointCalls, matchingMetricBackgrounds: true, checks, errors, external, limits: ['Headless browser; no interaction with the active Antigravity window', 'Telemetry mocked; no claim about live provider quota accuracy', 'Agent tracking only; no cancellation or clipboard action'] }, null, 2));
-    console.log(JSON.stringify({ success: true, layouts: checks.length, avatarAndTaskPreserved: true, hostColorsIsolated: true, output }));
+    fs.writeFileSync(path.join(output, 'verificacao.json'), JSON.stringify({ realAntigravityPreload: true, demoData: true, stopControlPresent: true, stopEndpointCalls, matchingMetricBackgrounds: true, checks, errors, external, limits: ['Headless browser; no interaction with the active Antigravity window', 'Telemetry mocked; no claim about live provider quota accuracy', 'The visual stop button is mocked here; the real cancellation was validated against the Antigravity Language Server on 2026-11-14'] }, null, 2));
+    console.log(JSON.stringify({ success: true, layouts: checks.length, avatarAndTaskPreserved: true, hostColorsIsolated: true, stopControlPresent: true, output }));
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

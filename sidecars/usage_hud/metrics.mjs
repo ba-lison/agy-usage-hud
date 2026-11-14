@@ -33,6 +33,7 @@ const AGENT_LABEL = { browser: 'Navegador', research: 'Pesquisa', self: 'Auxilia
 
 const modelCache = new Map()
 const taskCache = new Map()
+const rolesCache = new Map()
 let summariesCache = { at: 0, rows: [] }
 let sqlite = null
 let sqliteUnavailable = false
@@ -310,8 +311,42 @@ export function promptTitle(file, max = 64) {
   return null
 }
 
-function firstTask(file) {
-  if (!file) return ''
+// O nome que a aba Overview mostra é o Role do invoke_subagent, não o título
+// (que vem vazio). O transcript do pai traz o Role e a resposta com o id criado;
+// os dois são pareados na ordem em que aparecem.
+function cleanRole(value) {
+  if (typeof value !== 'string') return ''
+  return value.replace(/^"+|"+$/g, '').trim()
+}
+
+export function rolesFor(parentId) {
+  if (!parentId) return new Map()
+  const cached = rolesCache.get(parentId)
+  if (cached && Date.now() - cached.at < 10_000) return cached.map
+
+  const file = transcriptPath(parentId)
+  const steps = file ? parseSteps(readTail(file, 512 * 1024)) : []
+  const queue = []
+  const map = new Map()
+  for (const step of steps) {
+    if (step.type === 'PLANNER_RESPONSE' && Array.isArray(step.tool_calls)) {
+      for (const call of step.tool_calls) {
+        if (call?.name !== 'invoke_subagent') continue
+        queue.push(cleanRole(call.args?.Role || call.args?.TypeName))
+      }
+    }
+    if (step.type === 'GENERIC' && typeof step.content === 'string' && step.content.includes('Created the following subagent')) {
+      const id = /"conversationId"\s*:\s*"([^"]+)"/.exec(step.content)?.[1]
+      if (!id) continue
+      const role = queue.shift()
+      if (role) map.set(id, role)
+    }
+  }
+  rolesCache.set(parentId, { map, at: Date.now() })
+  return map
+}
+
+function firstTask(file) {  if (!file) return ''
   const cached = taskCache.get(file)
   if (cached !== undefined) return cached
   const steps = parseSteps(readHead(file, 16 * 1024))
@@ -357,25 +392,41 @@ export function childInfo(row, parentWindow, now = Date.now()) {
     (lastStep?.type === 'PLANNER_RESPONSE' &&
       lastStep.status === 'DONE' &&
       (!Array.isArray(lastStep.tool_calls) || lastStep.tool_calls.length === 0))
-  const running = !ended && modifiedAt > 0 && now - modifiedAt < ACTIVE_MS
+  // O subagente pode estar parado num timer/background sem ferramenta ativa; a
+  // flag not_fully_idle é o que o app usa para mantê-lo "vivo" na aba Overview.
+  const flaggedActive =
+    Boolean(row.not_fully_idle) ||
+    (typeof row.status === 'string' && row.status !== 'CASCADE_RUN_STATUS_IDLE')
+  const running = flaggedActive || (!ended && modifiedAt > 0 && now - modifiedAt < ACTIVE_MS)
+  const background = steps
+    .slice(-8)
+    .some(step => typeof step.content === 'string' && /background task|Task Description: Timer/i.test(step.content))
 
   const reading = contextFromSteps(steps)
   const tokens = reading.tokens
   const pct = contextPct(tokens, parentWindow)
   const agent = typeof row.agent_name === 'string' ? row.agent_name : ''
   const title = typeof row.title === 'string' ? row.title.trim() : ''
+  const role = rolesFor(row.parent_conversation_id).get(row.conversation_id) ?? ''
 
   return {
     id: row.conversation_id,
-    name: title || AGENT_LABEL[agent] || 'Subagente',
+    name: role || title || AGENT_LABEL[agent] || 'Subagente',
     agent,
     task: firstTask(file) || (running ? 'Processando tarefa' : 'Sem execução ativa'),
-    detail: activeCall ? describeCall(activeCall) : running ? 'Trabalhando' : 'Chamada retornou',
+    detail: activeCall
+      ? describeCall(activeCall)
+      : running
+        ? background || !activeCall
+          ? 'Aguardando em segundo plano'
+          : 'Trabalhando'
+        : 'Chamada retornou',
     kind: running ? (activeCall ? classifyTool(activeCall.name) : 'agents') : 'ended',
     status: running ? 'running' : 'idle',
     depth: row.relative_depth ?? 1,
     killed: Boolean(row.killed),
     lastSeen: modifiedAt ? new Date(modifiedAt).toISOString() : null,
+    lastSeenMs: modifiedAt,
     context: {
       tokens,
       pct,

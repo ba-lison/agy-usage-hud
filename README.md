@@ -38,12 +38,13 @@ Captura da interface do runtime renderizada com dados de demonstração. Os test
 - Atividade da sessão com mascote e reações às ferramentas.
 - Título da sessão igual ao da lista lateral do Antigravity, com modelo e projeto.
 - Contexto lido do transcript: prompt = entrada + cache, sem somar a saída.
-- Acompanhamento dos subagentes com nome, tarefa, atividade e o contexto de cada um.
+- Acompanhamento dos subagentes com o nome da aba Overview, tarefa, atividade e o contexto de cada um.
+- Parar um subagente em execução pelo painel, como o botão "Stop Subagent" da aba Overview.
 - Cota do modelo com percentual só quando o host informa; caso contrário, só o horário de renovação.
 - Temas claro e escuro, pausa das animações e respeito a movimento reduzido.
 - Atualização automática a cada 5 segundos, sem botão de recarregar.
 
-A disponibilidade dos dados depende do Antigravity. O título e a árvore de subagentes vêm do `conversation_summaries.db` do app; o contexto vem do `transcript.jsonl` da conversa. A janela do modelo usa uma tabela local (Gemini 1M, Claude 1M, GPT-OSS 128k); para modelo fora da tabela, o painel mostra os tokens e nenhum percentual. A cota usa a informação do host quando acessível e nunca cai para a cota de outro modelo. Não substitui a informação oficial de uso da conta.
+A disponibilidade dos dados depende do Antigravity. O título e a árvore de subagentes vêm do `conversation_summaries.db` do app; o nome de cada subagente é o `Role` do `invoke_subagent`; o contexto vem do `transcript.jsonl` da conversa. A janela do modelo usa uma tabela local (Gemini 1M, Claude 1M, GPT-OSS 128k); para modelo fora da tabela, o painel mostra os tokens e nenhum percentual. A cota usa a informação do host quando acessível e nunca cai para a cota de outro modelo. A parada usa o RPC `CancelCascadeInvocation` do Language Server, o mesmo caminho da aba Overview. Não substitui a informação oficial de uso da conta.
 
 ### Conheça o Sparky
 

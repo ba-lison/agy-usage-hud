@@ -11,7 +11,8 @@ Documento técnico de referência sobre a integração da interface V7 com os ev
 - **Janela do modelo:** tabela local (Gemini 1M, Claude 1M, GPT-OSS 128k). Modelo fora da tabela mostra tokens e nenhum percentual. O host não expõe esse valor em nenhuma API local.
 - **Interface:** botões de tema e de recarregar removidos; o painel atualiza sozinho a cada 5 s e segue o tema do sistema quando não há escolha salva. Pausa de animação mantida.
 - **Cartão `usage-hud.md`:** o hook deixou de gerá-lo. Ele usava janela de 200k e somava output, então mostrava 94% onde o painel mostra 13%. O painel passa a ser a única fonte.
-- **Limites:** o `agentapi` não expõe kill de subagente e o painel não renderiza acima do prompt. A lista serve para acompanhar; parar continua sendo pedido no chat (`manage_subagents`).
+- **Parada:** botão por subagente em execução, o mesmo `CancelCascadeInvocation` da aba Overview; o nome vem do `Role` do invoke.
+- **Limites:** o painel não renderiza acima do prompt. A parada usa o RPC do Language Server, não o `agentapi`.
 
 ### Carregar a V8
 
@@ -80,7 +81,7 @@ O servidor ativo foi consultado por HTTP e entregou o arquivo instalado, com has
               │     ├── GET /api/stats (métricas tipadas sem injeção de HTML)
               │     ├── GET /api/activity (estado do mascote + subagentes reais)
               │     ├── POST /api/event (ingestão localhost dos hooks)
-              │     └── POST /api/subagents/stop (resposta explícita de limitação)
+              │     └── POST /api/subagents/stop (CancelCascadeInvocation no Language Server)
               ├── activity-engine.mjs (normalizador de ferramentas e estados)
               └── ui.html (Painel V7 com mascote 32x32, WOFF2 embutido e polling)
 ```
@@ -94,7 +95,8 @@ O servidor ativo foi consultado por HTTP e entregou o arquivo instalado, com has
   - Cada requisição para `/api/activity` e `/api/stats` valida estritamente a sessão (`convId`).
   - Elimina o fallback aleatório baseado em data de modificação (`mtime`), garantindo isolamento total entre chats e janelas.
 - **Segurança de Endpoints:**
-  - `/api/event` e `/api/subagents/stop` aceitam conexões apenas de `127.0.0.1` / `localhost` e validam autenticação via token local do sidecar (`x-sidecar-token`).
+  - `/api/event` e `/api/subagents/stop` aceitam conexões apenas de `127.0.0.1` / `localhost`.
+  - A parada valida que o `agentId` é filho da conversa informada antes de chamar o Language Server.
 
 ---
 
@@ -116,20 +118,21 @@ A engine (`sidecars/usage_hud/activity-engine.mjs`) mapeia as ferramentas do Ant
 
 ---
 
-## 4. Subagentes: Descoberta e Limitações do Host
+## 4. Subagentes: Descoberta, Nome e Parada
 
-### Descoberta Real
-Os subagentes são descobertos inspecionando o transcript e metadados da sessão pai (`transcript.jsonl` e arquivos de sessão do Antigravity). Quando não há subagentes na sessão, a seção permanece recolhida/oculta.
+### Descoberta
+Os subagentes vêm do `conversation_summaries.db`: `parent_conversation_id` dá a árvore, `agent_name` dá o tipo, `not_fully_idle` diz se o filho ainda está vivo (inclusive esperando um timer em segundo plano), e `last_modified_time` ordena a lista. A aba Overview do app mostra só os ativos; o HUD faz o mesmo e mantém um filho recém-terminado por dois minutos.
+
+O nome exibido é o `Role` do `invoke_subagent` no transcript do pai — o mesmo "Timer Waiter" da aba Overview. O `title` do filho vem vazio; o fallback é o título, depois o `agent_name`.
 
 ### Capacidade de Cancelamento (Parada)
-Conforme auditoria do executável `language_server.exe agentapi --help`:
-- O CLI do Language Server expõe apenas três comandos:
-  1. `get-conversation-metadata`
-  2. `new-conversation`
-  3. `send-message`
-- Não existe primitiva no protocolo de sidecar ou agentapi para terminar (`kill`) um processo de subagente.
-- A ferramenta `manage_subagents` é uma capability interna de prompt do agente pai, inacessível diretamente via script HTTP ou iframe não privilegiado do webview.
-- **Interface atual:** a lista serve somente para acompanhar a atividade, com Ocultar/Mostrar. Por instrução de Bali em 2026-11-01, foram removidos todos os controles de parar, copiar pedido e "Parar pelo chat". O endpoint legado continua respondendo unsupported, mas não é chamado pela interface.
+O CLI `agentapi --help` expõe só `get-conversation-metadata`, `new-conversation` e `send-message`, mas o Language Server tem RPC próprio:
+
+- `CancelCascadeInvocation` com `cascade_id`, `kill_background_tasks` e `notify_parent`. É o caminho do botão **Stop Subagent** da aba Overview: encerra a invocação, mata tarefas em segundo plano e envia ao pai a mensagem `Subagent "..." has been explicitly canceled by the user...`.
+- O corpo desse método é **protobuf binário** (`Content-Type: application/proto`); JSON cai no parser de texto e retorna `invalid value`.
+- Fallback: `ForceStopCascadeTree` com `conversation_id`, que responde `stoppedConversationIds`.
+
+O painel envia `POST /api/subagents/stop` com a conversa pai e o id do filho. O teste de 2026-11-14 disparou um subagente com timer de 5 minutos, parou pelo endpoint e confirmou `CASCADE_RUN_STATUS_IDLE`, `not_fully_idle=0` e o timer não acordou depois.
 
 ---
 
@@ -159,6 +162,8 @@ Aplicação local conferida em 2026-11-01: %USERPROFILE%\.gemini\config\plugins\
 - O card Contexto usa exatamente o mesmo token do card Janela de 5 horas (--hud-surface-low), nos dois temas.
 - Bali dispensou as alternativas de parada pelo painel. Foram retirados os botões individuais, o botão geral, a cópia do pedido, o campo de cópia manual, os avisos e seus handlers. Ocultar/Mostrar preserva a atividade dos subagentes.
 - A regressão visual confere os fundos iguais, avatar/tarefa, ausência desses controles e nenhuma chamada ao endpoint legado de parada.
+
+> **Atualização 2026-11-14:** a parada voltou como botão por subagente, via `CancelCascadeInvocation` (V8). O registro acima descreve a versão de 2026-11-01.
 
 
 ## Encerramento confirmado por Bali — 2026-11-01

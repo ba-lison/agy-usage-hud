@@ -110,6 +110,87 @@ async function modelConfigs() {
   return configsCache.models
 }
 
+/* ---------------- parar subagente ---------------- */
+
+function languageServerBase() {
+  const env = process.env.ANTIGRAVITY_LS_ADDRESS
+  if (env) return env.replace(/\/$/, '')
+  const port = languageServerPort()
+  return port ? `http://127.0.0.1:${port}` : null
+}
+
+async function languageServerCsrf(base) {
+  if (process.env.ANTIGRAVITY_CSRF_TOKEN) return process.env.ANTIGRAVITY_CSRF_TOKEN
+  let port = languageServerPort()
+  if (!port && base) {
+    try { port = Number(new URL(base).port) } catch {}
+  }
+  return port ? csrfFor(port) : null
+}
+
+function postRaw(base, pathname, body, contentType, csrf) {
+  const target = new URL(pathname, `${base}/`)
+  return new Promise((resolve, reject) => {
+    const req = http.request({
+      hostname: target.hostname,
+      port: target.port || 80,
+      path: target.pathname,
+      method: 'POST',
+      headers: {
+        'Content-Type': contentType,
+        'Content-Length': body.length,
+        ...(csrf ? { 'x-codeium-csrf-token': csrf } : {}),
+      },
+    }, res => {
+      const chunks = []
+      res.on('data', chunk => chunks.push(chunk))
+      res.on('end', () => resolve({ status: res.statusCode, body: Buffer.concat(chunks).toString('utf8') }))
+    })
+    req.on('error', reject)
+    req.setTimeout(4000, () => { req.destroy(); reject(new Error('timeout')) })
+    req.write(body)
+    req.end()
+  })
+}
+
+// CancelCascadeInvocation é o mesmo comando que a aba Overview usa no botão
+// "Stop Subagent": encerra a invocação, mata tarefas em segundo plano e avisa o
+// pai. O endpoint só aceita application/proto; JSON cai no parser de texto.
+function cancelBody(cascadeId) {
+  const id = Buffer.from(cascadeId, 'utf8')
+  return Buffer.concat([Buffer.from([0x0a, id.length]), id, Buffer.from([0x10, 0x01, 0x18, 0x01])])
+}
+
+async function cancelCascade(cascadeId) {
+  const base = languageServerBase()
+  if (!base) return { ok: false, message: 'Language Server não localizado' }
+  const csrf = await languageServerCsrf(base)
+  if (!csrf) return { ok: false, message: 'CSRF do Language Server não localizado' }
+
+  try {
+    const res = await postRaw(
+      base,
+      '/exa.language_server_pb.LanguageServerService/CancelCascadeInvocation',
+      cancelBody(cascadeId),
+      'application/proto',
+      csrf,
+    )
+    if (res.status === 200) return { ok: true }
+    // Alguns builds só expõem a parada da árvore; a resposta traz os ids parados.
+    const fallback = await postRaw(
+      base,
+      '/exa.language_server_pb.LanguageServerService/ForceStopCascadeTree',
+      Buffer.from(JSON.stringify({ conversation_id: cascadeId }), 'utf8'),
+      'application/json',
+      csrf,
+    )
+    if (fallback.status === 200) return { ok: true }
+    return { ok: false, message: fallback.body || `HTTP ${res.status}` }
+  } catch (err) {
+    return { ok: false, message: err.message }
+  }
+}
+
 /* ---------------- métricas ---------------- */
 
 function conversationWindow(convId) {
@@ -177,10 +258,14 @@ function savedActivity(convId) {
 
 function subagentsFor(convId, parentWindow) {
   const now = Date.now()
-  const list = childrenOf(convId).map(row => childInfo(row, parentWindow, now))
+  const list = childrenOf(convId)
+    .map(row => childInfo(row, parentWindow, now))
+    // A aba Overview mostra só o que está vivo; um filho recém-terminado fica
+    // na lista por dois minutos para o resultado não sumir de imediato.
+    .filter(agent => agent.status === 'running' || (agent.lastSeenMs > 0 && now - agent.lastSeenMs < 120_000))
   list.sort((a, b) => {
     if (a.status !== b.status) return a.status === 'running' ? -1 : 1
-    return a.depth - b.depth
+    return b.lastSeenMs - a.lastSeenMs
   })
   return list
 }
@@ -363,7 +448,7 @@ async function handleRequest(req, res) {
     return
   }
 
-  // Sem primitiva de kill no agentapi, o endpoint só responde a limitação.
+  // Botão "Parar subagente": mesma primitiva da aba Overview.
   if (pathname === '/api/subagents/stop' && req.method === 'POST') {
     if (!isLocalhost) {
       res.writeHead(403, { 'Content-Type': 'application/json' })
@@ -372,29 +457,40 @@ async function handleRequest(req, res) {
     }
 
     let body = ''
-    req.on('data', chunk => (body += chunk))
-    req.on('end', () => {
+    req.on('data', chunk => {
+      body += chunk
+      if (body.length > 64 * 1024) req.destroy()
+    })
+    req.on('end', async () => {
       try {
         const data = JSON.parse(body || '{}')
-        if (!data.conversationId) {
+        const parent = typeof data.conversationId === 'string' ? data.conversationId : ''
+        const agentId = typeof data.agentId === 'string' ? data.agentId : ''
+        if (!parent || !agentId) {
           res.writeHead(400, { 'Content-Type': 'application/json' })
-          res.end(JSON.stringify({ error: 'conversationId is required' }))
+          res.end(JSON.stringify({ ok: false, message: 'conversationId e agentId são obrigatórios' }))
           return
         }
+
+        const belongs = childrenOf(parent).some(row => row.conversation_id === agentId)
+        if (!belongs) {
+          res.writeHead(403, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ ok: false, message: 'subagente não pertence a esta conversa' }))
+          return
+        }
+
+        const result = await cancelCascade(agentId)
+        if (!result.ok) {
+          res.writeHead(502, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ ok: false, status: 'failed', message: result.message }))
+          return
+        }
+
         res.writeHead(200, { 'Content-Type': 'application/json' })
-        res.end(
-          JSON.stringify({
-            ok: false,
-            status: 'unsupported',
-            conversationId: data.conversationId,
-            targetId: data.agentId || 'all',
-            message:
-              'O Antigravity não expõe cancelamento de subagente para o sidecar. Peça no chat para o assistente usar manage_subagents.',
-          }),
-        )
+        res.end(JSON.stringify({ ok: true, agentId }))
       } catch (err) {
         res.writeHead(500, { 'Content-Type': 'application/json' })
-        res.end(JSON.stringify({ error: err.message }))
+        res.end(JSON.stringify({ ok: false, status: 'failed', message: err.message }))
       }
     })
     return

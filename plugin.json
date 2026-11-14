@@ -1,6 +1,6 @@
 {
   "name": "usage-hud",
   "displayName": "AGY - UsageHUD",
-  "version": "1.1.0",
-  "description": "Painel local para Antigravity: título e contexto reais da sessão, subagentes com uso próprio e cota do modelo sem número inventado."
+  "version": "1.2.0",
+  "description": "Painel local para Antigravity: título e contexto reais, subagentes com o nome da aba Overview e botão de parar, e cota do modelo sem número inventado."
 }

@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
-import http from 'node:http'
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
@@ -159,56 +158,49 @@ console.log('5. Validando gravação atômica de telemetria no diretório de art
 }
 console.log('   ✓ Gravação atômica local comprovada.')
 
-// 6. Testes de segurança de endpoint HTTP
-console.log('6. Validando segurança dos endpoints do sidecar...')
+// 6. Endpoint real de parada: validação sem tocar no Language Server
+console.log('6. Validando o endpoint de parada do sidecar...')
 {
-  // Test server.mjs request handler directly without opening network port
-  const testServer = http.createServer(async (req, res) => {
-    // Basic mock of server security check
-    const isLocalhost = req.socket.remoteAddress === '127.0.0.1' || req.socket.remoteAddress === '::ffff:127.0.0.1'
-    if (req.method === 'POST' && req.url === '/api/subagents/stop') {
-      let body = ''
-      req.on('data', c => body += c)
-      req.on('end', () => {
-        const data = JSON.parse(body || '{}')
-        if (!data.conversationId) {
-          res.writeHead(400, { 'Content-Type': 'application/json' })
-          res.end(JSON.stringify({ error: 'conversationId is required' }))
-          return
-        }
-        res.writeHead(200, { 'Content-Type': 'application/json' })
-        res.end(JSON.stringify({ ok: false, status: 'unsupported' }))
-      })
-      return
-    }
-    res.writeHead(404)
-    res.end()
+  const serverPath = path.resolve(__dirname, '../sidecars/usage_hud/server.mjs')
+  const sidecar = spawn(process.execPath, [serverPath], {
+    env: { ...process.env, ANTIGRAVITY_SIDECAR_WEB_PORT: '0', USAGE_HUD_NO_INFO: '1' },
+  })
+  let output = ''
+  sidecar.stdout.on('data', chunk => (output += chunk))
+  sidecar.stderr.on('data', () => {})
+
+  const port = await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('sidecar não iniciou a tempo')), 8000)
+    sidecar.stdout.on('data', () => {
+      const match = /127\.0\.0\.1:(\d+)/.exec(output)
+      if (!match) return
+      clearTimeout(timer)
+      resolve(Number(match[1]))
+    })
+    sidecar.on('exit', code => {
+      clearTimeout(timer)
+      reject(new Error(`sidecar saiu com código ${code}`))
+    })
   })
 
-  const port = await new Promise(res => {
-    testServer.listen(0, '127.0.0.1', () => res(testServer.address().port))
-  })
+  try {
+    const missing = await fetch(`http://127.0.0.1:${port}/api/subagents/stop`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+    assert.equal(missing.status, 400, 'Sem conversationId e agentId deve recusar com 400')
 
-  // Test POST /api/subagents/stop without conversationId
-  const resBad = await fetch(`http://127.0.0.1:${port}/api/subagents/stop`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({})
-  })
-  assert.equal(resBad.status, 400, 'Requisição sem conversationId deve ser recusada com 400')
-
-  // Test POST /api/subagents/stop with conversationId
-  const resOk = await fetch(`http://127.0.0.1:${port}/api/subagents/stop`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ conversationId: 'test-conv-123', agentId: 'child-1' })
-  })
-  assert.equal(resOk.status, 200)
-  const okData = await resOk.json()
-  assert.equal(okData.status, 'unsupported', 'Deve retornar status unsupported honesto')
-
-  testServer.close()
+    const foreign = await fetch(`http://127.0.0.1:${port}/api/subagents/stop`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversationId: 'conv-sem-filhos', agentId: 'filho-inexistente' }),
+    })
+    assert.equal(foreign.status, 403, 'Subagente que não pertence à conversa deve recusar com 403')
+  } finally {
+    sidecar.kill()
+  }
 }
-console.log('   ✓ Proteção de requisições de controle comprovada.')
+console.log('   ✓ Endpoint de parada valida entrada e vínculo antes do Language Server.')
 
 console.log('\n🎉 Todos os testes de integração foram executados e passaram com 100% de sucesso!')

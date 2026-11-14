@@ -20,14 +20,9 @@ const SUMMARY_TTL_MS = 1000
 const MODEL_TTL_MS = 10_000
 const ACTIVE_MS = 10 * 60_000
 
-// O Antigravity não informa a janela do modelo em nenhuma API local. Esta
-// tabela é o que o modelo declara; para um modelo fora dela, a janela fica
-// null e o painel mostra só os tokens, sem percentual inventado.
-const WINDOWS = [
-  [/gemini/i, 1_048_576],
-  [/claude/i, 1_000_000],
-  [/gpt-oss/i, 131_072],
-]
+// O Antigravity informa a janela e os grupos de tokens pelo Language Server.
+// Não há tabela local de janela: sem o host, o painel mostra os tokens e não
+// inventa um limite.
 
 const AGENT_LABEL = { browser: 'Navegador', research: 'Pesquisa', self: 'Auxiliar' }
 
@@ -62,6 +57,13 @@ export function transcriptPath(convId, dirs = brainDirs()) {
 }
 
 export function latestConversationId(dirs = brainDirs()) {
+  // A conversa principal, não um subagente: o painel sem convId deve abrir a
+  // sessão que o usuário está vendo, e não o último transcript filho.
+  const childIds = new Set(
+    summaries()
+      .filter(row => Number(row.nesting_depth) > 0)
+      .map(row => row.conversation_id),
+  )
   let latest = null
   let latestAt = -1
   for (const dir of dirs) {
@@ -72,7 +74,7 @@ export function latestConversationId(dirs = brainDirs()) {
       continue
     }
     for (const entry of entries) {
-      if (!entry.isDirectory()) continue
+      if (!entry.isDirectory() || childIds.has(entry.name)) continue
       const file = path.join(dir, entry.name, '.system_generated', 'logs', 'transcript.jsonl')
       try {
         const at = fs.statSync(file).mtimeMs
@@ -163,11 +165,6 @@ export function splitModel(raw) {
   if (!raw) return { name: null, effort: null }
   const match = /^(.*?)(?:\s*\((.*?)\))?$/.exec(raw)
   return { name: match?.[1]?.trim() || raw, effort: match?.[2]?.trim() || null }
-}
-
-export function windowForModel(raw) {
-  if (!raw) return null
-  return WINDOWS.find(([re]) => re.test(raw))?.[1] ?? null
 }
 
 // O prompt real de cada turno é input_tokens + cache_read_tokens. output_tokens

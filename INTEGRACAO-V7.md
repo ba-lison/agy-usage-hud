@@ -4,15 +4,16 @@ Documento técnico de referência sobre a integração da interface V7 com os ev
 
 ## V8 — números reais — 2026-11-14
 
-- **Contexto:** o prompt de cada turno é `input_tokens + cache_read_tokens` do último `PLANNER_RESPONSE`. `output_tokens` não entra na conta; somá-lo inflava o valor.
+- **Contexto:** o total, o limite efetivo e os grupos vêm do `contextWindowUsage` do Language Server (`estimatedTokensUsed`, `maxContextTokens`, `tokenGroups`). O transcript é fallback: `input_tokens + cache_read_tokens`. No teste de 2026-11-14, o Gemini 4 Hydrogen mostrou **256k de limite efetivo** e 141,1k usados (55%), não 1M.
+- **Detalhamento:** o cartão Contexto abre uma barra empilhada e as linhas Mensagens, Prompt de sistema, Ferramentas e Livre. O botão Ferramentas MCP abre os servidores do `mcp_config.json` e as ferramentas de cada um; o host só informa o total de Ferramentas, então cada ferramenta mostra o tamanho do schema em KB.
 - **Título da sessão:** vem de `conversation_summaries.title`, a mesma lista lateral do app. O UUID não aparece mais no cabeçalho.
 - **Subagentes:** vêm de `conversation_summaries.parent_conversation_id`, com `agent_name`, profundidade e o contexto de cada filho lido do próprio transcript. A varredura de todas as pastas e o nome `Subagente` aleatório saíram.
 - **Cota:** usa apenas o modelo da sessão. Sem `remainingFraction` (caso dos modelos Claude), o painel mostra o horário de renovação e nenhum percentual. O fallback que podia exibir a cota do Gemini numa sessão Claude foi removido.
-- **Janela do modelo:** tabela local (Gemini 1M, Claude 1M, GPT-OSS 128k). Modelo fora da tabela mostra tokens e nenhum percentual. O host não expõe esse valor em nenhuma API local.
+- **Janela do modelo:** vem de `maxContextTokens`, o limite efetivo que o app usa na sessão; não há mais tabela local. Sem resposta do Language Server, o painel mostra só os tokens e não inventa limite.
 - **Interface:** botões de tema e de recarregar removidos; o painel atualiza sozinho a cada 5 s e segue o tema do sistema quando não há escolha salva. Pausa de animação mantida.
-- **Cartão `usage-hud.md`:** o hook deixou de gerá-lo. Ele usava janela de 200k e somava output, então mostrava 94% onde o painel mostra 13%. O painel passa a ser a única fonte.
+- **Cartão `usage-hud.md`:** o hook deixou de gerá-lo. Ele usava janela de 200k e somava output, então mostrava 94% onde o painel agora mostra 55% (256k). O painel passa a ser a única fonte.
 - **Parada:** botão por subagente em execução, com confirmação em dois cliques; o mesmo `CancelCascadeInvocation` da aba Overview. O nome vem do `Role` do invoke.
-- **Limites:** o painel não renderiza acima do prompt. A parada usa o RPC do Language Server, não o `agentapi`.
+- **Limites:** o painel não renderiza acima do prompt. A parada usa o RPC do Language Server, não o `agentapi`. O `sidecar.json` não tem campo de auto-open: o HUD abre pela linha Extensions ou pela aba do painel lateral, não sozinho ao iniciar o app.
 
 ### Carregar a V8
 
@@ -78,10 +79,11 @@ O servidor ativo foi consultado por HTTP e entregou o arquivo instalado, com has
         │
         └── Sidecar Runtime (sidecars/usage_hud/)
               ├── server.mjs
-              │     ├── GET /api/stats (métricas tipadas sem injeção de HTML)
+              │     ├── GET /api/stats (métricas + contexto do Language Server)
               │     ├── GET /api/activity (estado do mascote + subagentes reais)
               │     ├── POST /api/event (ingestão localhost dos hooks)
-              │     └── POST /api/subagents/stop (CancelCascadeInvocation no Language Server)
+              │     ├── POST /api/subagents/stop (CancelCascadeInvocation no Language Server)
+              │     └── StreamAgentStateUpdates (Connect JSON; contextWindowUsage) + mcp_config.json
               ├── activity-engine.mjs (normalizador de ferramentas e estados)
               └── ui.html (Painel V7 com mascote 32x32, WOFF2 embutido e polling)
 ```
@@ -135,6 +137,28 @@ O CLI `agentapi --help` expõe só `get-conversation-metadata`, `new-conversatio
 O painel envia `POST /api/subagents/stop` com a conversa pai e o id do filho. O teste de 2026-11-14 disparou um subagente com timer de 5 minutos, parou pelo endpoint e confirmou `CASCADE_RUN_STATUS_IDLE`, `not_fully_idle=0` e o timer não acordou depois.
 
 ---
+
+## 4.1 Contexto detalhado e ferramentas MCP
+
+### Fonte do contexto
+- `StreamAgentStateUpdates` (Connect JSON, `application/connect+json`, frame de 5 bytes) com `conversation_id`, `disable_rehydration` e page bounds zerados.
+- O primeiro frame traz `AgentStateUpdate.contextWindowUsage`: `estimatedTokensUsed`, `maxContextTokens` e `tokenGroups`.
+- Teste de 2026-11-14, Gemini 4 Hydrogen: **141.110 / 256.000 (55%)**; grupos `System Prompt` 34.084, `Tools` 6.940 e `Chat Messages` 100.086. O limite é o efetivo do app, não a janela teórica do provedor (1M).
+- O sidecar lê só o primeiro frame, fecha a conexão e guarda o resultado por 4 s. Sem o Language Server, o painel usa o transcript (`input + cache`) e não exibe percentual.
+
+### Grupos e cores
+- `Chat Messages` → Mensagens (azul), `Tools` → Ferramentas (laranja), `System Prompt` → Prompt de sistema (verde), livre no track neutro.
+- Se o host enviar outros tipos (`memory`, `skills`, `MCP`), o painel mapeia por `TokenType`/nome; não inventa categoria que o host não mandou.
+
+### Ferramentas MCP
+- `mcp_config.json` define os servidores; `~/.gemini/antigravity/mcp/<server>/*.json` guarda os schemas por ferramenta.
+- O painel lê apenas nomes e tamanhos; nunca `command`/`env` (que podem conter token).
+- O total de `Tools` é exato; o tamanho do schema de cada ferramenta aparece em KB. O host não informa tokens por ferramenta.
+- A lista é “configuradas no app”, não “conectadas nesta sessão”: o estado leve não traz o conjunto montado na sessão.
+
+### Auto-open
+- `SidecarUIConfig` tem só `display_name` e `views`; não há campo `auto_open`. O app abre o Overview nativo por padrão; o HUD é uma view de plugin e abre pela linha **Extensions** ou pela aba do painel lateral.
+- O esquema `sidecar://<id>/<path>` abre a view, mas exige clique.
 
 ## 5. Resiliência e Concorrência
 

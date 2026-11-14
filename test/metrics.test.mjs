@@ -8,7 +8,6 @@ import {
   quotaFor,
   quotaReading,
   splitModel,
-  windowForModel,
 } from '../sidecars/usage_hud/metrics.mjs'
 
 console.log('🧪 Métricas do AGY UsageHUD\n')
@@ -37,15 +36,12 @@ console.log('   ✓ Contexto = input + cache, sem somar output.')
 }
 console.log('   ✓ Modelo e esforço vêm da última troca registrada.')
 
-// 3. Janela por família, sem inventar para modelo desconhecido.
+// 3. O limite vem do host; sem ele, o percentual fica null.
 {
-  assert.equal(windowForModel('Gemini 4 Hydrogen (Medium)', 140_882), 1_048_576)
-  assert.equal(windowForModel('Claude Opus 5.5 (Medium)', 140_882), 1_000_000)
-  assert.equal(windowForModel('GPT-OSS 120B (Medium)', 140_882), 131_072)
-  assert.equal(windowForModel('Modelo Misterioso', 140_882), null)
-  assert.equal(windowForModel('Gemini 4 Hydrogen', 1_500_000), 1_048_576)
+  assert.equal(contextPct(141110, 256000), 55)
+  assert.equal(contextPct(141110, null), null)
 }
-console.log('   ✓ Tabela de janelas e modelo desconhecido sem percentual.')
+console.log('   ✓ Percentual usa o limite do host; sem limite, não inventa.')
 
 // 4. Cota só do modelo pedido; nada de cair no Flash por acidente.
 {

@@ -37,14 +37,26 @@ Captura da interface do runtime renderizada com dados de demonstração. Os test
 
 - Atividade da sessão com mascote e reações às ferramentas.
 - Título da sessão igual ao da lista lateral do Antigravity, com modelo e projeto.
-- Contexto lido do transcript: prompt = entrada + cache, sem somar a saída.
+- Contexto e limite efetivo lidos do Language Server, com detalhamento por grupo e barra colorida.
+- Ferramentas MCP configuradas, agrupadas por servidor, com o tamanho do schema.
 - Acompanhamento dos subagentes com o nome da aba Overview, tarefa, atividade e o contexto de cada um.
 - Parar um subagente em execução pelo painel, com confirmação em dois cliques, como o botão "Stop Subagent" da aba Overview.
 - Cota do modelo com percentual só quando o host informa; caso contrário, só o horário de renovação.
 - Temas claro e escuro, pausa das animações e respeito a movimento reduzido.
 - Atualização automática a cada 5 segundos, sem botão de recarregar.
 
-A disponibilidade dos dados depende do Antigravity. O título e a árvore de subagentes vêm do `conversation_summaries.db` do app; o nome de cada subagente é o `Role` do `invoke_subagent`; o contexto vem do `transcript.jsonl` da conversa. A janela do modelo usa uma tabela local (Gemini 1M, Claude 1M, GPT-OSS 128k); para modelo fora da tabela, o painel mostra os tokens e nenhum percentual. A cota usa a informação do host quando acessível e nunca cai para a cota de outro modelo. A parada usa o RPC `CancelCascadeInvocation` do Language Server, o mesmo caminho da aba Overview. Não substitui a informação oficial de uso da conta.
+A disponibilidade dos dados depende do Antigravity. O título e a árvore de subagentes vêm do `conversation_summaries.db` do app; o nome de cada subagente é o `Role` do `invoke_subagent`; o contexto vem do `transcript.jsonl` da conversa. O total do contexto, o limite efetivo e os grupos de tokens vêm do `contextWindowUsage` do Language Server. No teste de 2026-11-14, o Gemini 4 Hydrogen apareceu com **256k de limite efetivo** e 141,1k usados (55%), não 1M. Sem resposta do Language Server, o painel mostra só os tokens e não inventa limite. A cota usa a informação do host quando acessível e nunca cai para a cota de outro modelo. A parada usa o RPC `CancelCascadeInvocation` do Language Server, o mesmo caminho da aba Overview. Não substitui a informação oficial de uso da conta.
+
+### Detalhes do contexto
+
+O cartão Contexto abre um detalhamento com a barra empilhada e os grupos que o Antigravity expõe: **Mensagens**, **Prompt de sistema** e **Ferramentas**, mais o **Livre**. O botão **Ferramentas MCP** abre os servidores configurados no `mcp_config.json` (não necessariamente os montados nesta sessão) e as ferramentas de cada um. O host informa o total de Ferramentas, mas não separa tokens por ferramenta; o tamanho do schema de cada uma aparece em KB.
+
+<figure>
+  <img src="assets/contexto.png" alt="Detalhamento do contexto no UsageHUD: 141,1k de 256k, barra com Mensagens, Prompt de sistema, Ferramentas e Livre, e a lista de ferramentas MCP" width="420">
+  <figcaption><sub>Mesmos dados de demonstração; o detalhamento abre no cartão Contexto e as ferramentas MCP abrem em um segundo nível.</sub></figcaption>
+</figure>
+
+O painel não abre sozinho ao iniciar o app: o `sidecar.json` não tem campo de auto-open e o Antigravity abre o Overview nativo por padrão. O HUD abre pela linha **Extensions** ou pela aba do painel lateral; se a aba estava aberta ao fechar, o app pode restaurá-la, mas não há garantia documentada.
 
 ### Conheça o Sparky
 
@@ -93,6 +105,8 @@ cd agy-usage-hud
 O script copia o plugin para `%USERPROFILE%\.gemini\config\plugins\usage-hud`. Se já houver uma instalação, preserve uma cópia antes de executar: o script sobrescreve os arquivos de destino.
 
 No Antigravity, confira o plugin em **Customizations > Installed** e abra o painel **AGY - UsageHUD**. Se o sidecar não aparecer, consulte a configuração de ativação na [documentação oficial de sidecars](https://antigravity.google/docs/sidecars); não substitua seu arquivo de configuração inteiro.
+
+O painel não abre sozinho ao iniciar o app: o `sidecar.json` não tem campo de auto-open e o Antigravity abre o Overview nativo por padrão. Para abrir em um clique a partir de um chat ou artefato, use [Abrir o UsageHUD](sidecar://usage-hud/usage_hud/ui.html); o link exige o plugin habilitado e o sidecar rodando. A aba também aparece na linha **Extensions** do Overview.
 
 Depois de atualizar apenas a interface, feche e reabra a aba do HUD. Se o aplicativo mantiver a página antiga, reinicie o Antigravity quando ele estiver ocioso. O painel consulta os dados sozinho a cada 5 segundos; não há botão de recarregar. O [guia de atualização](INTEGRACAO-V7.md#carregar-atualizacao) explica os limites desse procedimento.
 

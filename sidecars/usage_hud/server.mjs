@@ -20,7 +20,6 @@ import {
   splitModel,
   summaryFor,
   transcriptPath,
-  windowForModel,
 } from './metrics.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -110,6 +109,169 @@ async function modelConfigs() {
   return configsCache.models
 }
 
+/* ---------------- contexto detalhado ---------------- */
+
+// O Language Server expõe o estado do agente via Connect (server streaming).
+// O primeiro frame já traz contextWindowUsage com o total, o limite efetivo do
+// app e os grupos de tokens. Lemos só o primeiro frame e fechamos a conexão.
+const contextCache = new Map()
+const contextInFlight = new Map()
+
+function connectFirstFrame(base, pathname, body, csrf) {
+  const target = new URL(pathname, `${base}/`)
+  return new Promise((resolve, reject) => {
+    let buffer = Buffer.alloc(0)
+    let settled = false
+    const finish = (error, value) => {
+      if (settled) return
+      settled = true
+      req.destroy()
+      if (error) reject(error)
+      else resolve(value)
+    }
+    const req = http.request({
+      hostname: target.hostname,
+      port: target.port || 80,
+      path: target.pathname,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/connect+json',
+        'Content-Length': body.length,
+        'Connect-Protocol-Version': '1',
+        ...(csrf ? { 'x-codeium-csrf-token': csrf } : {}),
+      },
+    }, res => {
+      if (res.statusCode !== 200) {
+        finish(new Error(`HTTP ${res.statusCode}`))
+        return
+      }
+      res.on('data', chunk => {
+        buffer = Buffer.concat([buffer, chunk])
+        if (buffer.length < 5) return
+        const length = buffer.readUInt32BE(1)
+        if (buffer.length < 5 + length) return
+        finish(null, buffer.subarray(5, 5 + length).toString('utf8'))
+      })
+      res.on('end', () => finish(new Error('stream encerrou sem frame')))
+    })
+    req.on('error', err => finish(err))
+    req.setTimeout(3500, () => finish(new Error('timeout')))
+    req.write(body)
+    req.end()
+  })
+}
+
+function contextGroups(groups) {
+  if (!Array.isArray(groups)) return []
+  return groups.map(group => ({
+    name: typeof group.name === 'string' ? group.name : '',
+    type: typeof group.type === 'string' ? group.type : '',
+    source: typeof group.source === 'string' ? group.source : '',
+    tokens: Number.isFinite(group.numTokens) ? group.numTokens : 0,
+    children: contextGroups(group.children),
+  }))
+}
+
+function fetchContextUsage(convId) {
+  if (!convId) return Promise.resolve(null)
+  const cached = contextCache.get(convId)
+  if (cached && Date.now() - cached.at < 4000) return Promise.resolve(cached.value)
+  if (contextInFlight.has(convId)) return contextInFlight.get(convId)
+  const pending = loadContextUsage(convId).finally(() => contextInFlight.delete(convId))
+  contextInFlight.set(convId, pending)
+  return pending
+}
+
+async function loadContextUsage(convId) {
+  const base = languageServerBase()
+  if (!base) return null
+  const csrf = await languageServerCsrf(base)
+  if (!csrf) return null
+
+  const request = {
+    conversation_id: convId,
+    subscriber_id: `usage-hud-${process.pid}-${Math.random().toString(36).slice(2)}`,
+    disable_rehydration: true,
+    trajectory_verbosity: 'CLIENT_TRAJECTORY_VERBOSITY_PROD_UI',
+    initial_steps_page_bounds: { start_index: 0, end_index_exclusive: 0 },
+    initial_generator_metadatas_page_bounds: { start_index: 0, end_index_exclusive: 0 },
+    initial_executor_metadatas_page_bounds: { start_index: 0, end_index_exclusive: 0 },
+  }
+  const payload = Buffer.from(JSON.stringify(request))
+  const frame = Buffer.concat([
+    Buffer.from([0, (payload.length >>> 24) & 255, (payload.length >>> 16) & 255, (payload.length >>> 8) & 255, payload.length & 255]),
+    payload,
+  ])
+
+  let value = null
+  try {
+    const body = await connectFirstFrame(
+      base,
+      '/exa.language_server_pb.LanguageServerService/StreamAgentStateUpdates',
+      frame,
+      csrf,
+    )
+    const usage = JSON.parse(body)?.update?.contextWindowUsage
+    if (
+      usage &&
+      Number.isFinite(usage.estimatedTokensUsed) &&
+      Number.isFinite(usage.maxContextTokens) &&
+      usage.maxContextTokens > 0
+    ) {
+      value = {
+        tokens: usage.estimatedTokensUsed,
+        window: usage.maxContextTokens,
+        groups: contextGroups(usage.tokenGroups),
+      }
+    }
+  } catch {}
+
+  contextCache.set(convId, { at: Date.now(), value })
+  return value
+}
+
+// Ferramentas MCP configuradas no app. Lê apenas os nomes dos servidores e os
+// arquivos de schema; nunca devolve command/env (que podem conter token).
+const mcpCache = { at: 0, value: [] }
+
+function readMcpServers() {
+  if (Date.now() - mcpCache.at < 30_000) return mcpCache.value
+  const home = homeDir()
+  const configPath = path.join(home, '.gemini', 'antigravity', 'mcp_config.json')
+  let servers = []
+  try {
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'))
+    servers = Object.keys(config.mcpServers || {})
+  } catch {}
+
+  const base = path.join(home, '.gemini', 'antigravity', 'mcp')
+  const value = servers.map(server => {
+    const candidates = [server, server.replace(/-/g, '_')]
+    const dir = candidates.map(name => path.join(base, name)).find(candidate => fs.existsSync(candidate))
+    const tools = []
+    if (dir) {
+      let entries = []
+      try {
+        entries = fs.readdirSync(dir, { withFileTypes: true })
+      } catch {}
+      for (const entry of entries) {
+        if (!entry.isFile() || !entry.name.endsWith('.json')) continue
+        let bytes = 0
+        try {
+          bytes = fs.statSync(path.join(dir, entry.name)).size
+        } catch {}
+        tools.push({ name: entry.name.replace(/\.json$/i, ''), bytes })
+      }
+      tools.sort((a, b) => a.name.localeCompare(b.name))
+    }
+    return { server, tools }
+  })
+
+  mcpCache.value = value
+  mcpCache.at = Date.now()
+  return value
+}
+
 /* ---------------- parar subagente ---------------- */
 
 function languageServerBase() {
@@ -193,21 +355,15 @@ async function cancelCascade(cascadeId) {
 
 /* ---------------- métricas ---------------- */
 
-function conversationWindow(convId) {
-  const file = transcriptPath(convId)
-  if (!file) return { file: null, raw: null, window: null, reading: contextFromSteps([]) }
-  const raw = modelFor(convId)
-  const reading = contextFromSteps(parseSteps(readTail(file)))
-  return { file, raw, window: windowForModel(raw), reading }
-}
-
 async function computeMetrics(targetConvId) {
   const id = targetConvId || latestConversationId()
   const file = id ? transcriptPath(id) : null
   const raw = id ? modelFor(id) : null
   const reading = file ? contextFromSteps(parseSteps(readTail(file))) : contextFromSteps([])
-  const window = windowForModel(raw)
-  const pct = contextPct(reading.tokens, window)
+  const live = id ? await fetchContextUsage(id) : null
+  const tokens = live ? live.tokens : reading.tokens
+  const window = live ? live.window : null
+  const pct = contextPct(tokens, window)
   const summary = summaryFor(id)
   const models = await modelConfigs()
   const quota = quotaReading(quotaFor(models, raw))
@@ -219,14 +375,17 @@ async function computeMetrics(targetConvId) {
     project: projectOf(summary?.workspace_uris),
     model: { raw, name: model.name, effort: model.effort, window },
     context: {
-      tokens: reading.tokens,
+      tokens,
       input: reading.input,
       cache: reading.cache,
       output: reading.output,
       window,
       pct,
-      free: window !== null && reading.tokens !== null ? Math.max(0, window - reading.tokens) : null,
+      free: window !== null && tokens !== null ? Math.max(0, window - tokens) : null,
+      groups: live?.groups ?? [],
+      source: live ? 'language-server' : 'transcript',
     },
+    mcp: readMcpServers(),
     quota,
     hasSession: Boolean(file),
     updatedAt: new Date().toISOString(),
@@ -270,7 +429,7 @@ function subagentsFor(convId, parentWindow) {
   return list
 }
 
-function computeActivity(targetConvId) {
+async function computeActivity(targetConvId) {
   const convId = targetConvId || latestConversationId()
   const model = getSessionModel(convId)
   let snap = model ? model.snapshot() : null
@@ -280,8 +439,8 @@ function computeActivity(targetConvId) {
     if (saved && model) snap = model.receive(saved.event, saved)
   }
 
-  const { window } = conversationWindow(convId)
-  const subagents = subagentsFor(convId, window)
+  const live = convId ? await fetchContextUsage(convId) : null
+  const subagents = subagentsFor(convId, live?.window ?? null)
 
   if (model && subagents.length > 0) {
     const runningCount = subagents.filter(agent => agent.status === 'running').length
@@ -406,7 +565,7 @@ async function handleRequest(req, res) {
 
   if (pathname === '/api/activity') {
     try {
-      const activity = computeActivity(convId)
+      const activity = await computeActivity(convId)
       res.writeHead(200, {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',

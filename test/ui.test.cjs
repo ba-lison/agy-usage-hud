@@ -18,7 +18,21 @@ const stats = {
   project: 'Mods-Plugins',
   model: { name: 'Gemini 4 Hydrogen', effort: 'Medium', window: 1048576 },
   quota: { exposed: true, consumedPct: 19, remainingPct: 81, resetLabel: 'hoje 19:22', timeLeftMs: 17974000 },
-  context: { tokens: 88900, window: 1048576, pct: 8, free: 959676 },
+  context: {
+    tokens: 88900,
+    window: 256000,
+    pct: 35,
+    free: 167100,
+    source: 'language-server',
+    groups: [
+      { name: 'Chat Messages', type: 'TOKEN_TYPE_CHAT_MESSAGES', tokens: 60000 },
+      { name: 'System Prompt', type: 'TOKEN_TYPE_SYSTEM_PROMPT', tokens: 20000 },
+      { name: 'Tools', type: 'TOKEN_TYPE_TOOLS', tokens: 8900 },
+    ],
+  },
+  mcp: [
+    { server: 'chrome-devtools', tools: [{ name: 'click', bytes: 615 }, { name: 'navigate_page', bytes: 1166 }] },
+  ],
 };
 let activity = { kind: 'agents', label: 'Coordenando subagentes', detail: '1 de 1 subagente em atividade', subagents: [agent] };
 
@@ -133,6 +147,13 @@ let activity = { kind: 'agents', label: 'Coordenando subagentes', detail: '1 de 
     assert.equal(stopEndpointCalls, 1, 'Confirming stop must call the stop endpoint');
     assert.equal(await page.locator('.agent-stop').isVisible(), false, 'Stop button disappears after the confirmation');
     assert.equal(await page.locator('.agent-stop-confirm').isVisible(), false);
+
+    await page.locator('#context-toggle').click();
+    assert.equal(await page.locator('#context-groups li').count(), 4, 'Context detail lists three groups plus free space');
+    await page.locator('#mcp-toggle').click();
+    assert.equal(await page.locator('.mcp-server').count(), 1);
+    assert.equal(await page.locator('.mcp-tools li').count(), 2);
+    await page.locator('#context-toggle').click();
 
     await page.setViewportSize({ width: 320, height: 862 });
     await page.evaluate(sample => {

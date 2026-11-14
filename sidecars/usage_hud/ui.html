@@ -97,6 +97,8 @@
   --hud-usage-yellow: #c3ab4e;
   --hud-usage-orange: #d28b54;
   --hud-usage-red: #c96969;
+  --hud-usage-purple: #7a5fc7;
+  --hud-usage-teal: #2f8f8f;
   --hud-font: "Google Sans Flex", "Google Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-family: var(--hud-font);
   font-synthesis: none;
@@ -123,6 +125,8 @@
   --hud-usage-yellow: #d9c677;
   --hud-usage-orange: #dda574;
   --hud-usage-red: #d98d8d;
+  --hud-usage-purple: #b7a0ff;
+  --hud-usage-teal: #6fd3d3;
 }
 * { box-sizing: border-box; }
 body {
@@ -514,6 +518,134 @@ p, h1, h2, dl, dd { margin: 0; }
 }
 .context-footer strong { font-weight: 450; color: var(--hud-muted); }
 
+.context-toggle {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  color: var(--hud-faint);
+}
+.context-toggle:hover { background: var(--hud-surface-high); color: var(--hud-ink); }
+.context-toggle .icon { width: 15px; height: 15px; }
+.context-toggle .chevron, .mcp-toggle .chevron { transition: transform 0.18s var(--hud-ease-out); }
+.context-toggle[aria-expanded="true"] .chevron,
+.mcp-toggle[aria-expanded="true"] .chevron { transform: rotate(90deg); }
+
+.context-detail {
+  border-top: 1px solid var(--hud-outline-soft);
+  margin-top: 10px;
+  padding-top: 10px;
+}
+.context-stack {
+  display: flex;
+  height: 9px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--hud-track);
+}
+.context-stack > span {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  background: var(--seg-color, var(--hud-muted));
+}
+.context-stack > span.ctx-free {
+  min-width: 0;
+  background: transparent;
+}
+.context-groups {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+.context-groups li {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-top: 1px solid var(--hud-outline-soft);
+  font-size: 11px;
+}
+.context-groups li:first-child { border-top: none; }
+.context-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--seg-color, var(--hud-muted));
+}
+.context-name {
+  color: var(--hud-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.context-tokens {
+  color: var(--hud-ink);
+  font-variant-numeric: tabular-nums;
+}
+.context-pct {
+  min-width: 34px;
+  text-align: right;
+  color: var(--hud-faint);
+  font-variant-numeric: tabular-nums;
+}
+.context-note {
+  margin-top: 8px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--hud-faint);
+}
+
+.mcp-block {
+  border-top: 1px solid var(--hud-outline-soft);
+  margin-top: 10px;
+  padding-top: 8px;
+}
+.mcp-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  padding: 3px 0;
+  color: var(--hud-muted);
+  font-size: 11px;
+  text-align: left;
+}
+.mcp-toggle .chevron { width: 14px; height: 14px; margin-left: auto; }
+.mcp-summary { font-size: 10px; color: var(--hud-faint); }
+.mcp-list { margin-top: 6px; max-height: 230px; overflow-y: auto; }
+.mcp-server { border-top: 1px solid var(--hud-outline-soft); padding: 4px 0; }
+.mcp-server summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--hud-ink);
+  cursor: pointer;
+  list-style: none;
+}
+.mcp-server summary::-webkit-details-marker { display: none; }
+.mcp-server summary::before { content: '▸'; color: var(--hud-faint); }
+.mcp-server[open] summary::before { content: '▾'; }
+.mcp-count { margin-left: auto; color: var(--hud-faint); font-size: 10px; }
+.mcp-tools { list-style: none; margin: 4px 0 4px 14px; padding: 0; }
+.mcp-tools li {
+  display: flex;
+  gap: 8px;
+  padding: 2px 0;
+  font-size: 10.5px;
+  color: var(--hud-muted);
+}
+.mcp-tool-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mcp-tool-cost { margin-left: auto; white-space: nowrap; color: var(--hud-faint); font-variant-numeric: tabular-nums; }
+.mcp-empty { font-size: 10px; color: var(--hud-faint); margin: 2px 0 4px 14px; }
+
   </style>
 </head>
 <body>
@@ -523,6 +655,7 @@ p, h1, h2, dl, dd { margin: 0; }
     <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 10 7-10 7Z"/></symbol>
     <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 6v12M16 6v12"/></symbol>
     <symbol id="i-stop" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
   </svg>
 
   <div class="dashboard">
@@ -588,6 +721,9 @@ p, h1, h2, dl, dd { margin: 0; }
       <section aria-labelledby="context-title" class="metric-panel context-panel">
         <div class="panel-heading">
           <h2 id="context-title"><svg class="icon"><use href="#i-context"/></svg>Contexto</h2>
+          <button type="button" class="context-toggle" id="context-toggle" aria-expanded="false" aria-controls="context-detail" aria-label="Ver detalhes do contexto" title="Ver detalhes do contexto">
+            <svg class="icon chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+          </button>
         </div>
         <p class="metric-caption">Capacidade utilizada</p>
         <div class="context-value">
@@ -601,6 +737,22 @@ p, h1, h2, dl, dd { margin: 0; }
         <div class="context-footer">
           <span id="context-footer-tokens">Sem leitura do transcript</span>
           <strong id="context-free-label"></strong>
+        </div>
+
+        <div id="context-detail" class="context-detail" hidden>
+          <div id="context-stack" class="context-stack" aria-hidden="true"></div>
+          <ul id="context-groups" class="context-groups" aria-label="Grupos de consumo do contexto"></ul>
+          <p id="context-source-note" class="context-note"></p>
+
+          <div class="mcp-block">
+            <button type="button" class="mcp-toggle" id="mcp-toggle" aria-expanded="false" aria-controls="mcp-list" aria-label="Ver ferramentas MCP">
+              <span>Ferramentas MCP</span>
+              <span id="mcp-summary" class="mcp-summary"></span>
+              <svg class="icon chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+            </button>
+            <div id="mcp-list" class="mcp-list" hidden></div>
+            <p id="mcp-note" class="context-note"></p>
+          </div>
         </div>
       </section>
     </div>
@@ -951,6 +1103,201 @@ p, h1, h2, dl, dd { margin: 0; }
       syncSubagentsList();
     }
 
+    let lastContext = null;
+    let lastMcp = null;
+    let mcpSignature = '';
+    let contextOpen = false;
+    let mcpOpen = false;
+
+    const CONTEXT_COLORS = {
+      chat: 'var(--hud-usage-blue)',
+      tools: 'var(--hud-usage-orange)',
+      system: 'var(--hud-usage-green)',
+      mcp: 'var(--hud-usage-yellow)',
+      memory: 'var(--hud-usage-purple)',
+      skills: 'var(--hud-usage-teal)',
+      other: 'var(--hud-muted)',
+    };
+
+    function contextKind(group) {
+      const type = String(group.type || '').toUpperCase();
+      const name = String(group.name || '').toLowerCase();
+      if (name.includes('mcp')) return 'mcp';
+      if (type.includes('CHAT') || name.includes('message')) return 'chat';
+      if (type.includes('TOOL') || name.includes('tool')) return 'tools';
+      if (type.includes('MEMORY') || name.includes('memory')) return 'memory';
+      if (type.includes('SKILL') || name.includes('skill')) return 'skills';
+      if (type.includes('SYSTEM') || name.includes('system')) return 'system';
+      return 'other';
+    }
+
+    function contextLabel(group) {
+      const labels = {
+        'Chat Messages': 'Mensagens',
+        'Tools': 'Ferramentas',
+        'System Prompt': 'Prompt de sistema',
+        'System Tools': 'Ferramentas do sistema',
+        'Memory Files': 'Memória',
+        'Skills': 'Skills',
+        'MCP Tools': 'Ferramentas MCP',
+      };
+      return labels[group.name] || group.name || 'Outros';
+    }
+
+    function contextRows(ctx) {
+      const window = typeof ctx.window === 'number' && ctx.window > 0 ? ctx.window : null;
+      const rows = (Array.isArray(ctx.groups) ? ctx.groups : [])
+        .filter(group => Number(group.tokens) > 0)
+        .map(group => ({ name: contextLabel(group), kind: contextKind(group), tokens: Number(group.tokens) || 0 }));
+      const total = typeof ctx.tokens === 'number' ? ctx.tokens : null;
+      const sum = rows.reduce((acc, row) => acc + row.tokens, 0);
+      if (total !== null && total > sum) rows.push({ name: 'Outros', kind: 'other', tokens: total - sum });
+      const free = window !== null && total !== null ? Math.max(0, window - total) : null;
+      return { rows, window, total, free };
+    }
+
+    function renderContextDetail(ctx) {
+      const stack = document.getElementById('context-stack');
+      const list = document.getElementById('context-groups');
+      const note = document.getElementById('context-source-note');
+      const { rows, window, total, free } = contextRows(ctx || {});
+      stack.replaceChildren();
+      list.replaceChildren();
+
+      if (window === null || total === null) {
+        note.textContent = 'O Language Server não informou o limite desta sessão; só os tokens estão disponíveis.';
+        return;
+      }
+
+      for (const row of rows) {
+        const segment = document.createElement('span');
+        segment.style.width = `${Math.max(0, (row.tokens / window) * 100)}%`;
+        segment.style.setProperty('--seg-color', CONTEXT_COLORS[row.kind] || CONTEXT_COLORS.other);
+        segment.title = `${row.name}: ${formatNumber(row.tokens)} tokens`;
+        stack.append(segment);
+      }
+      if (free > 0) {
+        const spacer = document.createElement('span');
+        spacer.className = 'ctx-free';
+        spacer.style.width = `${(free / window) * 100}%`;
+        stack.append(spacer);
+      }
+
+      const allRows = [...rows];
+      if (free !== null) allRows.push({ name: 'Livre', kind: 'free', tokens: free });
+      for (const row of allRows) {
+        const li = document.createElement('li');
+        const dot = document.createElement('span');
+        dot.className = 'context-dot';
+        if (row.kind === 'free') {
+          dot.style.setProperty('--seg-color', 'transparent');
+          dot.style.border = '1px solid var(--hud-outline)';
+        } else {
+          dot.style.setProperty('--seg-color', CONTEXT_COLORS[row.kind] || CONTEXT_COLORS.other);
+        }
+        const name = document.createElement('span');
+        name.className = 'context-name';
+        name.textContent = row.name;
+        const tokens = document.createElement('span');
+        tokens.className = 'context-tokens';
+        tokens.textContent = formatNumber(row.tokens);
+        const pct = document.createElement('span');
+        pct.className = 'context-pct';
+        pct.textContent = `${Math.round((row.tokens / window) * 100)}%`;
+        li.append(dot, name, tokens, pct);
+        list.append(li);
+      }
+
+      note.textContent = ctx.source === 'language-server'
+        ? 'Fonte: Language Server do Antigravity. O limite é o que o app usa nesta sessão.'
+        : 'Leitura do transcript; o Language Server não respondeu, então o limite não é exibido.';
+    }
+
+    function renderMcp(mcp) {
+      const list = document.getElementById('mcp-list');
+      const summary = document.getElementById('mcp-summary');
+      const servers = Array.isArray(mcp) ? mcp : [];
+      const toolCount = servers.reduce((total, server) => total + (Array.isArray(server.tools) ? server.tools.length : 0), 0);
+      summary.textContent = servers.length
+        ? `${servers.length} servidor${servers.length > 1 ? 'es' : ''} · ${toolCount} ferramentas`
+        : 'nenhum servidor configurado';
+      document.getElementById('mcp-note').textContent = servers.length
+        ? 'Configuradas no app (mcp_config.json); não significa que todas estão montadas nesta sessão. O total de Ferramentas é exato; o tamanho por ferramenta é o do schema.'
+        : 'Nenhum servidor MCP no mcp_config.json.';
+      document.getElementById('mcp-toggle').title = 'Servidores MCP configurados no app';
+
+      const signature = JSON.stringify(servers.map(server => [server.server, (server.tools || []).map(tool => [tool.name, tool.bytes])]));
+      if (signature === mcpSignature) return;
+      mcpSignature = signature;
+      list.replaceChildren();
+
+      if (!servers.length) {
+        const empty = document.createElement('p');
+        empty.className = 'mcp-empty';
+        empty.textContent = 'Nenhum servidor MCP no mcp_config.json.';
+        list.append(empty);
+        return;
+      }
+
+      for (const server of servers) {
+        const details = document.createElement('details');
+        details.className = 'mcp-server';
+        const heading = document.createElement('summary');
+        const name = document.createElement('span');
+        name.textContent = server.server;
+        const count = document.createElement('span');
+        count.className = 'mcp-count';
+        count.textContent = `${(server.tools || []).length} ferramentas`;
+        heading.append(name, count);
+        details.append(heading);
+
+        if (Array.isArray(server.tools) && server.tools.length) {
+          const tools = document.createElement('ul');
+          tools.className = 'mcp-tools';
+          for (const tool of server.tools) {
+            const item = document.createElement('li');
+            const label = document.createElement('span');
+            label.className = 'mcp-tool-name';
+            label.textContent = tool.name;
+            const cost = document.createElement('span');
+            cost.className = 'mcp-tool-cost';
+            cost.textContent = tool.bytes
+              ? `${(tool.bytes / 1024).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} KB`
+              : '—';
+            cost.title = 'Tamanho do schema da ferramenta; o host não separa tokens por ferramenta';
+            item.append(label, cost);
+            tools.append(item);
+          }
+          details.append(tools);
+        } else {
+          const empty = document.createElement('p');
+          empty.className = 'mcp-empty';
+          empty.textContent = 'Sem cache de ferramentas.';
+          details.append(empty);
+        }
+        list.append(details);
+      }
+    }
+
+    function applyContextVisibility() {
+      const detail = document.getElementById('context-detail');
+      const toggle = document.getElementById('context-toggle');
+      const mcpList = document.getElementById('mcp-list');
+      const mcpToggle = document.getElementById('mcp-toggle');
+      detail.hidden = !contextOpen;
+      toggle.setAttribute('aria-expanded', String(contextOpen));
+      mcpList.hidden = !mcpOpen;
+      mcpToggle.setAttribute('aria-expanded', String(mcpOpen));
+    }
+
+    function renderContext(ctx, mcp) {
+      lastContext = ctx || {};
+      lastMcp = Array.isArray(mcp) ? mcp : [];
+      applyContextVisibility();
+      if (contextOpen) renderContextDetail(lastContext);
+      renderMcp(lastMcp);
+    }
+
     function renderTelemetry(data) {
       if (!data) return;
 
@@ -984,8 +1331,8 @@ p, h1, h2, dl, dd { margin: 0; }
       document.getElementById('context-num').textContent = tokens === null ? '–' : formatNumber(tokens);
       document.getElementById('context-max-label').textContent = max === null ? '—' : formatNumber(max);
       document.getElementById('context-max-label').title = max === null
-        ? 'O host não expõe a janela deste modelo'
-        : 'Limite do modelo segundo a tabela local do plugin';
+        ? 'O Language Server não informou o limite desta sessão'
+        : 'Limite informado pelo Language Server do Antigravity';
       document.querySelector('.context-track').setAttribute('aria-valuenow', String(pct));
       document.getElementById('context-bar-fill').style.width = `${Math.min(100, Math.max(0, pct))}%`;
       document.getElementById('context-footer-tokens').textContent = tokens === null
@@ -996,6 +1343,7 @@ p, h1, h2, dl, dd { margin: 0; }
       document.getElementById('context-free-label').textContent = max !== null && typeof ctx.free === 'number'
         ? `${pct}% · ${formatNumber(ctx.free)} livres`
         : '';
+      renderContext(ctx, data.mcp);
     }
 
     async function fetchStats() {
@@ -1070,6 +1418,19 @@ p, h1, h2, dl, dd { margin: 0; }
         else if (event.target.closest('.agent-stop-cancel')) cancelStop();
       });
 
+      document.getElementById('context-toggle').addEventListener('click', () => {
+        contextOpen = !contextOpen;
+        try { localStorage.setItem('agy-hud-context-open', contextOpen ? '1' : '0'); } catch {}
+        applyContextVisibility();
+        if (contextOpen && lastContext) renderContextDetail(lastContext);
+      });
+
+      document.getElementById('mcp-toggle').addEventListener('click', () => {
+        mcpOpen = !mcpOpen;
+        try { localStorage.setItem('agy-hud-mcp-open', mcpOpen ? '1' : '0'); } catch {}
+        applyContextVisibility();
+      });
+
       // 4. Initial Theme & Motion: sem botão, segue o sistema se não houver escolha salva.
       try {
         const savedTheme = localStorage.getItem('agy-hud-theme');
@@ -1079,6 +1440,12 @@ p, h1, h2, dl, dd { margin: 0; }
         setTheme(true);
       }
       updateMotion();
+
+      try {
+        contextOpen = localStorage.getItem('agy-hud-context-open') === '1';
+        mcpOpen = localStorage.getItem('agy-hud-mcp-open') === '1';
+      } catch {}
+      applyContextVisibility();
 
       // 5. Initial Mascot display
       document.getElementById('companion-slot').innerHTML = mascot('idle', 72);

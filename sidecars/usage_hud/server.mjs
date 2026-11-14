@@ -25,22 +25,12 @@ import {
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// Marca de quando o app subiu. O log do Language Server é recriado a cada
-// execução, então a data de criação dele é o âncora mais estável; se ele não
-// existir, vale o início deste sidecar. Tudo que for mais antigo é sessão da
-// execução anterior e não deve aparecer no painel recém-aberto.
-function appRunStartedAt() {
-  let at = Date.now()
-  try {
-    const roam = process.env.APPDATA || path.join(homeDir(), 'AppData', 'Roaming')
-    const log = path.join(roam, 'Antigravity', 'logs', 'language_server.log')
-    const birth = fs.statSync(log).birthtimeMs
-    if (Number.isFinite(birth) && birth > 0) at = Math.min(at, birth)
-  } catch {}
-  return at
-}
-
-const RUN_STARTED_AT = appRunStartedAt()
+// Marca de quando o app subiu: o carregamento deste sidecar, que sobe junto com
+// o app. Tudo que for mais antigo é sessão da execução anterior e não deve
+// aparecer no painel recém-aberto. O log do Language Server não serve de âncora:
+// o app trunca o arquivo em vez de recriá-lo, então a data de criação fica
+// meses atrás e qualquer conversa de hoje passaria pelo corte.
+const RUN_STARTED_AT = Date.now()
 
 // Session state storage: Map<conversationId, ActivityModel>
 const sessionModels = new Map()

@@ -33,7 +33,7 @@ Interface em português do Brasil. A versão atual foi validada localmente no Wi
 
 <p align="center"><img src="assets/painel.png" alt="Painel UsageHUD com Sparky, subagentes, cota do modelo e contexto" width="420"></p>
 
-Captura da interface do runtime renderizada com dados de demonstração. Os testes visuais utilizam o preload real do Antigravity; a imagem não representa uma sessão ou uma cota real.
+Captura da interface com dados fictícios, no tema Legacy Dark. Não representa uma sessão nem uma cota real.
 
 - Atividade da sessão com mascote e reações às ferramentas.
 - Título da sessão igual ao da lista lateral do Antigravity, com modelo e projeto.
@@ -42,7 +42,7 @@ Captura da interface do runtime renderizada com dados de demonstração. Os test
 - Acompanhamento dos subagentes com o nome da aba Overview, tarefa, atividade e o contexto de cada um.
 - Parar um subagente em execução pelo painel, com confirmação em dois cliques, como o botão "Stop Subagent" da aba Overview.
 - Cota do modelo com percentual só quando o host informa; caso contrário, só o horário de renovação.
-- Temas claro e escuro, pausa das animações e respeito a movimento reduzido.
+- Cores, borda e raio do tema ativo do Antigravity: o painel muda de tema junto com o app, sem seletor próprio.
 - Atualização automática a cada 5 segundos, sem botão de recarregar.
 
 A disponibilidade dos dados depende do Antigravity. O título e a árvore de subagentes vêm do `conversation_summaries.db` do app; o nome de cada subagente é o `Role` do `invoke_subagent`; o contexto vem do `transcript.jsonl` da conversa. O total do contexto, o limite efetivo e os grupos de tokens vêm do `contextWindowUsage` do Language Server. No teste de 2026-11-14, o Gemini 4 Hydrogen apareceu com **256k de limite efetivo** e 141,1k usados (55%), não 1M. Sem resposta do Language Server, o painel mostra só os tokens e não inventa limite. A cota usa a informação do host quando acessível e nunca cai para a cota de outro modelo. A parada usa o RPC `CancelCascadeInvocation` do Language Server, o mesmo caminho da aba Overview. Não substitui a informação oficial de uso da conta.
@@ -56,39 +56,59 @@ O cartão Contexto abre um detalhamento com a barra empilhada e os grupos que o 
   <figcaption><sub>Mesmos dados de demonstração; o detalhamento abre no cartão Contexto e as ferramentas MCP abrem em um segundo nível.</sub></figcaption>
 </figure>
 
+### Tema nativo
+
+O painel lê as variáveis que o Antigravity envia ao sidecar no evento `theme-change` (`--background`, `--foreground`, `--card`, `--card-border`, `--border`, `--primary`, `--secondary`, `--muted-foreground`, `--chart-1` a `--chart-6`, entre outras) e acompanha a troca de tema do app. Fora do host, ou se faltar alguma variável, valem os valores do Legacy Dark e do Default Light, extraídos do renderer do app em 14/11/2026:
+
+| Token | Legacy Dark | Default Light | Uso no painel |
+| --- | --- | --- | --- |
+| `--background` | `#101010` | `#FFFFFF` | Fundo |
+| `--card` | `#191919` | `#FFFFFF` | Cartões |
+| `--card-border` | `#222222` | `rgb(10 10 12 / 0.12)` | Borda dos cartões |
+| `--foreground` | `#CCCCCC` | `#0A0A0C` | Texto |
+| `--muted-foreground` | `#6E6E6E` | `#52525B` | Texto secundário, misturado com 30% do foreground para ficar acima de 4,5:1 no escuro |
+| `--primary` | `#007ACC` | `#2560A3` | Anel da cota e ponto do título |
+| `--chart-1` | `#60A5FA` | `#1D4ED8` | Mensagens e acessórios do Sparky |
+| `--chart-2` | `#FBBF24` | `#B45309` | Ferramentas |
+| `--chart-3` | `#34D399` | `#15803D` | Prompt de sistema |
+
+Os cartões têm raio de 12 px e borda de 1 px; botões usam 8 px e os contadores são pílulas. A fonte é a Google Sans Flex, embutida no HTML, com base de 16 px. O anel da cota troca o `--primary` pelo `--warning` a partir de 80% e pelo `--error` a partir de 95%.
+
+A prévia [`propostas/nativo-2026-11-15/index.html`](propostas/nativo-2026-11-15/index.html) abre direto no navegador, sem servidor. Ela mostra o painel em 472 px com dados fictícios, as 15 reações do Sparky e um seletor claro/escuro que existe só na prévia.
+
 O painel não abre sozinho ao iniciar o app: o `sidecar.json` não tem campo de auto-open e o Antigravity abre o Overview nativo por padrão. O HUD abre pela linha **Extensions** ou pela aba do painel lateral; se a aba estava aberta ao fechar, o app pode restaurá-la, mas não há garantia documentada.
 
 ### Conheça o Sparky
 
 Sparky é a estrelinha colorida com olhos de bloco que acompanha a sessão. As expressões, os acessórios e os movimentos ajudam a reconhecer a atividade sem precisar ler cada chamada de ferramenta.
 
-<p align="center"><img src="assets/sparky-reacoes.gif" alt="Nove reações animadas do Sparky: disponível, pensando, pesquisa, leitura, busca, edição, terminal, subagentes e pergunta" width="540"></p>
+<p align="center"><img src="assets/sparky-reacoes.png" alt="As 15 reações do Sparky em grade: à disposição, pesquisa na web, lendo uma página, lendo um arquivo, buscando no projeto, editando arquivo, comando no terminal, coordenando subagentes, pergunta, gerando imagem, usando ferramenta, pensando, aguardando, turno encerrado e erro" width="540"></p>
 
-Demonstração de nove reações, renderizada a partir das mesmas animações do painel. As atividades do GIF são exemplos; não indicam ferramentas ou subagentes reais em execução.
+As 15 reações, uma por estado do `activity-engine`, capturadas da prévia. Lá elas estão animadas e, ao clicar numa delas, o painel faz a transição para aquele estado.
 
 | Reação | Quando aparece | O que muda no Sparky |
 | --- | --- | --- |
-| À disposição | Aguardando a próxima mensagem | Olhos abertos, piscadas e flutuação suave. |
-| Pensando | O modelo prepara a próxima resposta | Olhos semicerrados, olhar deslocado e balão com três pontos pulsando. |
-| Pesquisa na web | Chamada de `search_web` | Globo com movimento suave, olhar que percorre o ambiente e variação na abertura de um olho. |
-| Lendo uma página | Chamada de `read_url_content` | Óculos, olhos menores, olhar de leitura e ícone de página. |
-| Lendo um arquivo | Chamada de `read_file` ou `view_file` | Óculos, olhar que acompanha linhas e leve inclinação do corpo. |
-| Buscando no projeto | Busca ou listagem de arquivos | Olhos com aberturas diferentes e ícone de pasta com lupa. |
-| Editando arquivo | Escrita ou alteração de um arquivo | Olhos mais estreitos, corpo inclinado e lápis em movimento. |
-| Comando no terminal | Execução de comando ou gestão de tarefa | Olhar concentrado, pequeno terminal e cursor piscando. |
-| Coordenando subagentes | Chamada de ferramentas de subagentes ou informação de atividade disponível | Dois pequenos companheiros flutuantes e olhar lateral. A lista mostra os agentes detectados. |
-| Pergunta para você | Pergunta ou pedido de permissão | Olhos assimétricos e balão com interrogação. |
-| Gerando imagem | Chamada de `generate_image` | Ícone de imagem ao lado da estrelinha. |
-| Usando ferramenta | Ferramenta sem uma reação específica mapeada | Expressão básica e símbolo de ferramenta/conexão. |
-| Aguardando próxima ação | Uma chamada retornou e a sessão aguarda o próximo passo | Olhos menores, sem acessório de ferramenta. |
-| Encerramento | Pose usada nas linhas de subagentes sem execução ativa | Olhos semicerrados, sem piscada nessa pose e símbolo de pausa. Não confirma sucesso da tarefa. |
-| Erro na ferramenta | O evento recebido informa erro | Olhos com aberturas diferentes e sinal de exclamação. |
+| À disposição | Aguardando a próxima mensagem | Olhos abertos, piscadas, flutuação suave e, de vez em quando, um olhar para os lados. |
+| Pensando | O modelo prepara a próxima resposta | O corpo sobe e inclina, os olhos semicerrados olham para cima e aparece um balão com três pontos. |
+| Pesquisa na web | Chamada de `search_web` | Inclina na direção de um globo que gira, com o olhar percorrendo o ambiente. |
+| Lendo uma página | Chamada de `read_url_content` | Óculos, olhos menores e uma janela de navegador com uma faixa que desce pelas linhas. |
+| Lendo um arquivo | Chamada de `read_file` ou `view_file` | Óculos, olhar que acompanha as linhas e uma lupa passando pela folha. |
+| Buscando no projeto | Busca ou listagem de arquivos | Um olho mais fechado, olhar inquieto e lupa sobre uma pasta. |
+| Editando arquivo | Escrita ou alteração de um arquivo | Olhos estreitos, corpo inclinado, linhas que vão sendo escritas e lápis em movimento. |
+| Comando no terminal | Execução de comando ou gestão de tarefa | Flutuação mais rápida, olhar concentrado e um terminal com texto sendo digitado e cursor piscando. |
+| Coordenando subagentes | Ferramentas de subagentes ou subagentes ativos | Corpo erguido e dois mini Sparkys flutuando, ligados por linhas tracejadas. A lista mostra os agentes detectados. |
+| Pergunta para você | Pergunta ou pedido de permissão | Cabeça inclinada, olhos assimétricos e um balão com interrogação que pulsa. |
+| Gerando imagem | Chamada de `generate_image` | Olhos bem abertos, uma moldura com paisagem e um brilho que pisca. |
+| Usando ferramenta | Ferramenta sem reação própria | Duas engrenagens girando em sentidos opostos. |
+| Aguardando próxima ação | Uma chamada retornou e a sessão aguarda o próximo passo | Corpo mais baixo, flutuação lenta e uma ampulheta que vira. |
+| Turno encerrado | Fim do turno e linhas de subagentes sem execução ativa | Olhos fechados, corpo em repouso e um "z" subindo. Não confirma que a tarefa deu certo. |
+| Erro na ferramenta | O evento recebido informa erro | Treme três vezes e assenta, com olhos desiguais e um triângulo de alerta piscando. |
 
-O movimento de base combina flutuação em ciclos de 4 segundos, oito quadros de variação de cores em 8 segundos e piscadas em ciclos de 6,5 segundos. A sombra acompanha a flutuação. Esses movimentos não representam percentual de cota nem comprovam, por si só, uma tarefa em execução.
+O movimento de base combina flutuação em ciclos de 4 segundos, oito quadros de variação de cores em 8 segundos e piscadas em ciclos de 6,5 segundos. Na troca de estado o SVG continua o mesmo: pose, olhar e acessório mudam com uma transição curta, sem o mascote sumir e reaparecer. A sombra acompanha a flutuação. Esses movimentos não representam percentual de cota nem comprovam, por si só, uma tarefa em execução.
 
-Tecnicamente, o Sparky é um sprite PNG de 32×32 ampliado com `image-rendering: pixelated`. As oito variações de cor são geradas no canvas a partir do mesmo sprite; olhos, óculos, globo, lápis e demais objetos são SVG sobrepostos. O movimento vem de keyframes CSS, não de quadros animados.
+Tecnicamente, o Sparky é um sprite PNG de 32×32 ampliado com `image-rendering: pixelated`. As oito variações de cor são geradas no canvas a partir do mesmo sprite; olhos, óculos e acessórios são SVG sobrepostos. O movimento vem de keyframes CSS, não de quadros animados.
 
-O botão de pausa interrompe as animações. Com a preferência de sistema **movimento reduzido**, as animações também são desativadas. Os estados dependem dos eventos e metadados que o Antigravity disponibiliza.
+Não há botão de pausa. Com a preferência de sistema **movimento reduzido**, todas as animações e transições do Sparky param. Os estados dependem dos eventos e metadados que o Antigravity disponibiliza.
 
 ## Começar a usar
 

@@ -2,6 +2,14 @@
 
 Documento técnico de referência sobre a integração da interface V7 com os eventos reais do Antigravity.
 
+## V9: desenho nativo (2026-11-15)
+
+- **Tema:** o painel segue o tema do Antigravity. `applyHostTheme()` converte as variáveis do `theme-change` (`--background`, `--card`, `--card-border`, `--border`, `--primary`, `--muted-foreground`, `--chart-*` etc.) em tokens `--hud-*`; aceita hex, `color-mix()` e o trio HSL do shadcn. Sem host, valem os valores do Legacy Dark e do Default Light. Saíram a lógica de `prefers-color-scheme`, o `localStorage` de tema e o `setTheme()`.
+- **Visual:** cartões de raio 12 px com borda de 1 px, botões de 8 px, contadores em pílula, título da sessão em 16 px e subtítulo em 13,7 px. Contexto em `--chart-1/2/3` na própria barra principal; anel da cota no `--primary`.
+- **Sparky:** cada estado do `activity-engine` tem pose, olhar e acessório próprios, e a troca de estado muda só o `data-state` do SVG existente, com transição. O botão de pausa e o estado `motionPaused`/`data-motion` foram removidos; só o `prefers-reduced-motion` do sistema para as animações.
+- **Prévia:** `propostas/nativo-2026-11-15/index.html`, autocontida, com dados fictícios, as 15 reações e um seletor de tema que existe só na prévia.
+- As notas abaixo sobre seletor de tema e pausa de animação valem para as versões anteriores.
+
 ## V8 — números reais — 2026-11-14
 
 - **Contexto:** o total, o limite efetivo e os grupos vêm do `contextWindowUsage` do Language Server (`estimatedTokensUsed`, `maxContextTokens`, `tokenGroups`). O transcript é fallback: `input_tokens + cache_read_tokens`. No teste de 2026-11-14, o Gemini 4 Hydrogen mostrou **256k de limite efetivo** e 141,1k usados (55%), não 1M.

@@ -59,17 +59,20 @@ let activity = { kind: 'agents', label: 'Coordenando subagentes', detail: '1 de 
     await page.locator('#agent-list li').waitFor();
     await page.evaluate(() => document.fonts.ready);
 
-    // Real preload + host HSL tokens reproduce the inherited black text bug.
-    async function hostTheme() {
-      await page.evaluate(() => window.dispatchEvent(new MessageEvent('message', { data: {
-        type: 'theme-change', payload: { cssVariables: {
-          '--background': '240 10% 3.9%', '--foreground': '0 0% 98%',
-          '--muted': '240 3.7% 15.9%', '--muted-foreground': '240 5% 64.9%',
-          '--faint': '#111111', '--surface': '#161616', '--ink': '#111111'
-        } }
-      } })));
+    // O painel segue o tema do host. Legacy Dark e Default Light são os tokens do
+    // renderer do Antigravity (2026-11-14); 'hsl' é o trio do shadcn que já quebrou o texto.
+    const THEMES = {
+      hsl: { '--background': '240 10% 3.9%', '--foreground': '0 0% 98%', '--muted': '240 3.7% 15.9%', '--muted-foreground': '240 5% 64.9%', '--faint': '#111111', '--surface': '#161616', '--ink': '#111111' },
+      dark: { '--background': '#101010', '--foreground': '#cccccc', '--primary': '#007acc', '--card': 'color-mix(in srgb, #ffffff 6.5%, #101010)', '--card-border': 'color-mix(in srgb, #cccccc 10%, var(--card))', '--border': 'rgba(255, 255, 255, 0.1)', '--secondary': 'color-mix(in srgb, #ffffff 14%, #101010)', '--muted-foreground': 'color-mix(in srgb, #cccccc 50%, #101010)', '--chart-1': '#60a5fa', '--chart-2': '#fbbf24', '--chart-3': '#34d399' },
+      light: { '--background': '#ffffff', '--foreground': '#0a0a0c', '--primary': '#2560a3', '--card': '#ffffff', '--card-border': 'rgb(10 10 12 / 0.12)', '--border': 'rgb(10 10 12 / 0.11)', '--secondary': 'rgb(10 10 12 / 0.095)', '--muted-foreground': '#52525b', '--chart-1': '#1d4ed8', '--chart-2': '#b45309', '--chart-3': '#15803d' },
+    };
+    async function hostTheme(name = 'hsl') {
+      await page.evaluate(cssVariables => window.dispatchEvent(new MessageEvent('message', { data: {
+        type: 'theme-change', payload: { cssVariables }
+      } })), THEMES[name]);
     }
     await hostTheme();
+    assert.equal(await page.locator('#motion-toggle').count(), 0, 'Sem botão de pausa');
     await page.screenshot({ path: path.join(output, 'painel-472-dark.png'), fullPage: true });
     assert.equal(await page.locator('.agent-avatar .mascot').count(), 1, 'Task text must not replace the avatar');
     assert.equal(await page.locator('.agent-copy > span').textContent(), agent.task);
@@ -80,13 +83,14 @@ let activity = { kind: 'agents', label: 'Coordenando subagentes', detail: '1 de 
 
     // Sem remainingFraction o painel não pode inventar zero.
     await page.evaluate(stub => renderTelemetry({ ...stub, quota: { exposed: false, consumedPct: null, remainingPct: null, resetLabel: 'sex 08:44', timeLeftMs: 520303493 } }), stats);
-    assert.equal(await page.locator('#usage-value').textContent(), '–');
+    assert.equal(await page.locator('#usage-value').textContent(), '—');
+    assert.equal(await page.locator('.usage-percent-symbol').isVisible(), false);
     assert.equal(await page.locator('#usage-caption').textContent(), 'sem percentual');
     await page.evaluate(stub => renderTelemetry(stub), stats);
 
     for (const theme of ['dark', 'light']) {
-      await page.evaluate(dark => setTheme(dark), theme === 'dark');
-      await hostTheme();
+      await hostTheme(theme);
+      assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), theme);
       await page.waitForTimeout(200); // Deixa a transição de cor existente assentar antes das capturas.
       for (const width of [320, 390, 472, 680, 1024]) {
         await page.setViewportSize({ width, height: 862 });
@@ -165,7 +169,7 @@ let activity = { kind: 'agents', label: 'Coordenando subagentes', detail: '1 de 
     assert.equal(await page.locator('#subagents').isVisible(), false);
     activity = { kind: 'idle', label: 'À disposição', detail: 'Aguardando sua próxima mensagem', subagents: [] };
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    assert.equal(await page.locator('#companion-slot .float-body').evaluate(el => getComputedStyle(el).animationName), 'none');
+    assert.equal(await page.locator('#companion-slot .mascot').evaluate(el => [el, ...el.querySelectorAll('*')].filter(node => getComputedStyle(node).animationName !== 'none').length), 0, 'Movimento reduzido para todas as animações do Sparky');
     assert.deepEqual(errors, []);
     assert.deepEqual(external, []);
     fs.writeFileSync(path.join(output, 'verificacao.json'), JSON.stringify({ realAntigravityPreload: true, demoData: true, stopControlPresent: true, stopEndpointCalls, matchingMetricBackgrounds: true, checks, errors, external, limits: ['Headless browser; no interaction with the active Antigravity window', 'Telemetry mocked; no claim about live provider quota accuracy', 'The visual stop button is mocked here; the real cancellation was validated against the Antigravity Language Server on 2026-11-14'] }, null, 2));

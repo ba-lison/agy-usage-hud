@@ -170,16 +170,40 @@ p, h1, h2, dl, dd { margin: 0; }
   border-bottom: 1px solid var(--hud-outline-soft);
   margin-bottom: 12px;
 }
-.hud-status-badge {
+.hud-session {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+.hud-session-text {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.hud-session-text strong {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--hud-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hud-session-text span {
+  font-size: 10.5px;
   color: var(--hud-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .status-dot {
   width: 7px;
   height: 7px;
+  flex: none;
   background: var(--hud-blue);
   border-radius: 50%;
   box-shadow: 0 0 6px var(--hud-blue);
@@ -188,6 +212,7 @@ p, h1, h2, dl, dd { margin: 0; }
   display: flex;
   align-items: center;
   gap: 6px;
+  flex: none;
 }
 .icon-btn {
   width: 30px;
@@ -201,9 +226,6 @@ p, h1, h2, dl, dd { margin: 0; }
   transition: background-color 0.15s, color 0.15s, transform 0.1s;
 }
 .icon-btn:hover { background: var(--hud-surface-high); color: var(--hud-ink); }
-.icon-btn .sun { display: none; }
-:root[data-theme="dark"] .icon-btn .moon { display: none; }
-:root[data-theme="dark"] .icon-btn .sun { display: block; }
 
 /* Companion Dock */
 .companion-dock {
@@ -298,6 +320,9 @@ p, h1, h2, dl, dd { margin: 0; }
   border-top: 1px solid var(--hud-outline-soft);
 }
 .agent-list li:first-child { border-top: none; }
+.agent-list li[data-depth="2"] { padding-left: 14px; }
+.agent-list li[data-depth="3"] { padding-left: 28px; }
+.agent-list li[data-depth="4"] { padding-left: 42px; }
 .agent-avatar {
   width: 36px;
   height: 38px;
@@ -455,29 +480,22 @@ p, h1, h2, dl, dd { margin: 0; }
   <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></symbol>
     <symbol id="i-context" viewBox="0 0 24 24"><path d="m3 8 9-5 9 5-9 5-9-5Zm0 4 9 5 9-5M3 16l9 5 9-5"/></symbol>
-    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.4 13.2A8.5 8.5 0 0 1 10.8 3a8.5 8.5 0 1 0 9.6 10.2Z"/></symbol>
-    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
     <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 10 7-10 7Z"/></symbol>
     <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 6v12M16 6v12"/></symbol>
-    <symbol id="i-reload" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
   </svg>
 
   <div class="dashboard">
     <header class="hud-header">
-      <div class="hud-status-badge">
+      <div class="hud-session">
         <span class="status-dot"></span>
-        <span id="session-indicator">Sessão ativa</span>
+        <div class="hud-session-text">
+          <strong id="session-title">Sessão ativa</strong>
+          <span id="session-sub">Lendo a sessão…</span>
+        </div>
       </div>
       <div class="hud-controls">
         <button type="button" class="icon-btn" id="motion-toggle" aria-label="Pausar animações" title="Pausar/retomar animações">
           <svg class="icon pause-icon"><use href="#i-pause"/></svg>
-        </button>
-        <button type="button" class="icon-btn" id="theme-toggle" aria-label="Alternar tema" title="Alternar tema claro/escuro">
-          <svg class="icon sun"><use href="#i-sun"/></svg>
-          <svg class="icon moon"><use href="#i-moon"/></svg>
-        </button>
-        <button type="button" class="icon-btn" id="reload-btn" aria-label="Atualizar dados" title="Atualizar dados agora">
-          <svg class="icon"><use href="#i-reload"/></svg>
         </button>
       </div>
     </header>
@@ -502,27 +520,27 @@ p, h1, h2, dl, dd { margin: 0; }
     <div class="metrics-grid">
       <section aria-labelledby="time-title" class="metric-panel time-panel">
         <div class="panel-heading">
-          <h2 id="time-title"><svg class="icon"><use href="#i-clock"/></svg>Janela de 5 horas</h2>
+          <h2 id="time-title"><svg class="icon"><use href="#i-clock"/></svg>Uso do modelo</h2>
         </div>
         <p class="metric-caption">Tempo até renovar</p>
         <div aria-label="Tempo restante" class="time-value" id="time-display">
-          <span id="time-h">05<span class="time-unit">h</span></span>
-          <span id="time-m">00<span class="time-unit">m</span></span>
-          <span class="seconds" id="time-s">00<span>s</span></span>
+          <span id="time-h">--<span class="time-unit">h</span></span>
+          <span id="time-m">--<span class="time-unit">m</span></span>
+          <span class="seconds" id="time-s">--<span>s</span></span>
         </div>
-        <div class="window-usage" data-consumed-percent="0">
-          <div aria-label="Consumo da janela de 5 horas" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" aria-valuetext="0% consumido; 100% disponível" class="usage-ring" role="progressbar">
+        <div class="window-usage" data-consumed-percent="">
+          <div aria-label="Consumo da cota do modelo" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" aria-valuetext="Percentual não exposto" class="usage-ring" role="progressbar">
             <svg aria-hidden="true" viewBox="0 0 44 44">
               <circle class="usage-track" cx="22" cy="22" r="19"></circle>
               <circle class="usage-progress" cx="22" cy="22" pathlength="100" r="19" stroke-dasharray="0 100"></circle>
             </svg>
-            <span><span id="usage-value">0</span><span class="usage-percent-symbol">%</span></span>
+            <span><span id="usage-value">–</span><span class="usage-percent-symbol">%</span></span>
           </div>
-          <span class="usage-caption">consumido</span>
+          <span class="usage-caption" id="usage-caption">sem dados</span>
         </div>
         <div class="time-footer">
-          <span class="usage-remaining">100% disponível</span>
-          <strong id="reset-time-label">Renova às --:--</strong>
+          <span class="usage-remaining">o host não informa</span>
+          <strong id="reset-time-label">Sem renovação exposta</strong>
         </div>
       </section>
 
@@ -532,16 +550,16 @@ p, h1, h2, dl, dd { margin: 0; }
         </div>
         <p class="metric-caption">Capacidade utilizada</p>
         <div class="context-value">
-          <span class="context-number" id="context-num">0</span>
+          <span class="context-number" id="context-num">–</span>
           <span class="context-divider">/</span>
-          <span class="context-max-label" id="context-max-label">1M</span>
+          <span class="context-max-label" id="context-max-label">—</span>
         </div>
         <div aria-label="Capacidade de contexto utilizada" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="context-track" role="progressbar">
           <span id="context-bar-fill" style="width: 0%;"></span>
         </div>
         <div class="context-footer">
-          <span id="context-footer-tokens">0 de 1M tokens</span>
-          <strong id="context-free-label">1M livres</strong>
+          <span id="context-footer-tokens">Sem leitura do transcript</span>
+          <strong id="context-free-label"></strong>
         </div>
       </section>
     </div>
@@ -677,16 +695,23 @@ p, h1, h2, dl, dd { margin: 0; }
           existingRows.delete(String(agent.id));
         }
 
+        row.dataset.depth = String(agent.depth || 1);
         if (row.dataset.status !== agent.status || row.dataset.kind !== agent.kind) {
           row.querySelector('.agent-avatar').innerHTML = mascot(isRunning ? agent.kind : 'ended', 36, !isRunning);
           row.dataset.status = agent.status;
           row.dataset.kind = agent.kind;
         }
 
-        row.querySelector('.agent-copy > strong').textContent = agent.name || 'Subagente';
-        row.querySelector('.agent-copy > span').textContent = isRunning ? (agent.task || 'Processando') : 'Chamada retornou';
-        row.querySelector('.agent-copy > small').textContent = isRunning ? (agent.detail || 'Ativo') : 'Sem execução ativa';
+        const ctx = agent.context || {};
+        const usage = typeof ctx.tokens === 'number'
+          ? `${formatNumber(ctx.tokens)}${typeof ctx.pct === 'number' ? ` · ${ctx.pct}%` : ''}`
+          : '';
+        const detail = [isRunning ? agent.detail : 'Sem execução ativa', usage].filter(Boolean).join(' · ');
 
+        row.querySelector('.agent-copy > strong').textContent = agent.name || 'Subagente';
+        row.querySelector('.agent-copy > span').textContent = agent.task || (isRunning ? 'Processando' : 'Sem execução ativa');
+        row.querySelector('.agent-copy > small').textContent = detail;
+        row.title = [agent.name, agent.task, detail].filter(Boolean).join(' — ');
       }
 
       // Remove deleted agents
@@ -702,8 +727,8 @@ p, h1, h2, dl, dd { margin: 0; }
 
     function formatNumber(n) {
       if (!n && n !== 0) return '0';
-      if (n >= 1000000) return (n / 1000000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'M';
-      if (n >= 1000) return (n / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'k';
+      if (n >= 1000000) return (n / 1000000).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + 'M';
+      if (n >= 1000) return (n / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + 'k';
       return String(n);
     }
 
@@ -728,6 +753,16 @@ p, h1, h2, dl, dd { margin: 0; }
       if (countdownTimer) clearInterval(countdownTimer);
       countdownTimer = setInterval(updateCountdown, 1000);
       updateCountdown();
+    }
+
+    function stopCountdown() {
+      if (countdownTimer) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+      }
+      document.querySelector('#time-h').innerHTML = '--<span class="time-unit">h</span>';
+      document.querySelector('#time-m').innerHTML = '--<span class="time-unit">m</span>';
+      document.querySelector('#time-s').innerHTML = '--<span>s</span>';
     }
 
     const colorStops = [
@@ -764,7 +799,25 @@ p, h1, h2, dl, dd { margin: 0; }
       ring.setAttribute("aria-valuenow", String(val));
       ring.setAttribute("aria-valuetext", `${val}% consumido; ${available}% disponível`);
       document.querySelector("#usage-value").textContent = String(val);
+      document.querySelector("#usage-caption").textContent = "consumido";
       document.querySelector(".usage-remaining").textContent = `${available}% disponível`;
+    }
+
+    // Sem remainingFraction o host não informa percentual. Mostrar zero seria
+    // mentir; o anel fica vazio e o texto diz que o dado não foi exposto.
+    function renderNoUsage() {
+      const usage = document.querySelector(".window-usage");
+      usage.style.removeProperty("--hud-usage-color");
+      usage.dataset.consumedPercent = "";
+      const arc = usage.querySelector(".usage-progress");
+      arc.setAttribute("stroke-dasharray", "0 100");
+      arc.style.opacity = "0";
+      const ring = usage.querySelector(".usage-ring");
+      ring.setAttribute("aria-valuenow", "0");
+      ring.setAttribute("aria-valuetext", "Percentual não exposto para este modelo");
+      document.querySelector("#usage-value").textContent = "–";
+      document.querySelector("#usage-caption").textContent = "sem percentual";
+      document.querySelector(".usage-remaining").textContent = "o host não informa";
     }
 
     let lastRenderedKind = '';
@@ -791,34 +844,48 @@ p, h1, h2, dl, dd { margin: 0; }
     function renderTelemetry(data) {
       if (!data) return;
 
-      // Session indication
-      const sessionInd = document.getElementById('session-indicator');
-      if (data.hasSession) {
-        sessionInd.textContent = data.conversationId ? `Sessão ${data.conversationId.slice(0, 8)}...` : 'Sessão conectada';
-      } else {
-        sessionInd.textContent = 'Aguardando sessão...';
-      }
+      // Sessão: o título é o mesmo da lista lateral do Antigravity.
+      const title = data.title || 'Sessão ativa';
+      const titleEl = document.getElementById('session-title');
+      titleEl.textContent = title;
+      titleEl.title = title;
+      const model = data.model || {};
+      const modelLabel = model.name
+        ? `${model.name}${model.effort ? ` · ${model.effort}` : ''}`
+        : 'Modelo não identificado';
+      document.getElementById('session-sub').textContent = [modelLabel, data.project].filter(Boolean).join('  ·  ');
 
-      // 5h Window
-      const five = data.fiveHour || {};
-      if (five.timeLeftMs !== undefined) startCountdown(five.timeLeftMs);
-      if (five.resetTime) document.getElementById('reset-time-label').textContent = `Renova às ${five.resetTime}`;
-      const consumed = five.consumedPct !== undefined ? five.consumedPct : 0;
-      renderUsage(consumed);
+      // Cota do modelo
+      const quota = data.quota || {};
+      if (typeof quota.timeLeftMs === 'number') startCountdown(quota.timeLeftMs);
+      else stopCountdown();
+      document.getElementById('reset-time-label').textContent = quota.resetLabel
+        ? `Renova ${quota.resetLabel}`
+        : 'Sem renovação exposta';
+      if (quota.exposed && typeof quota.consumedPct === 'number') renderUsage(quota.consumedPct);
+      else renderNoUsage();
 
-      // Context
+      // Contexto
       const ctx = data.context || {};
-      const tokens = ctx.tokens || 0;
-      const max = ctx.maxTokens || DEFAULT_CONTEXT_WINDOW;
-      const pct = ctx.pct !== undefined ? ctx.pct : Math.round((tokens / max) * 100);
-      const remaining = ctx.remaining !== undefined ? ctx.remaining : Math.max(0, max - tokens);
+      const tokens = typeof ctx.tokens === 'number' ? ctx.tokens : null;
+      const max = typeof ctx.window === 'number' ? ctx.window : null;
+      const pct = typeof ctx.pct === 'number' ? ctx.pct : 0;
 
-      document.getElementById('context-num').textContent = formatNumber(tokens);
-      document.getElementById('context-max-label').textContent = formatNumber(max);
-      document.querySelector('.context-track').setAttribute('aria-valuenow', String(Math.min(100, Math.max(0, pct))));
+      document.getElementById('context-num').textContent = tokens === null ? '–' : formatNumber(tokens);
+      document.getElementById('context-max-label').textContent = max === null ? '—' : formatNumber(max);
+      document.getElementById('context-max-label').title = max === null
+        ? 'O host não expõe a janela deste modelo'
+        : 'Limite do modelo segundo a tabela local do plugin';
+      document.querySelector('.context-track').setAttribute('aria-valuenow', String(pct));
       document.getElementById('context-bar-fill').style.width = `${Math.min(100, Math.max(0, pct))}%`;
-      document.getElementById('context-footer-tokens').textContent = `${formatNumber(tokens)} de ${formatNumber(max)} tokens`;
-      document.getElementById('context-free-label').textContent = `${formatNumber(remaining)} livres`;
+      document.getElementById('context-footer-tokens').textContent = tokens === null
+        ? 'Sem leitura do transcript'
+        : max === null
+          ? `${formatNumber(tokens)} tokens no prompt · limite não exposto`
+          : `${formatNumber(tokens)} de ${formatNumber(max)} tokens`;
+      document.getElementById('context-free-label').textContent = max !== null && typeof ctx.free === 'number'
+        ? `${pct}% · ${formatNumber(ctx.free)} livres`
+        : '';
     }
 
     async function fetchStats() {
@@ -842,7 +909,7 @@ p, h1, h2, dl, dd { margin: 0; }
           renderActivity(actData);
         }
       } catch (err) {
-        document.getElementById('session-indicator').textContent = 'Tentando reconectar...';
+        document.getElementById('session-sub').textContent = 'Tentando reconectar…';
       }
     }
 
@@ -859,7 +926,6 @@ p, h1, h2, dl, dd { margin: 0; }
 
     function setTheme(dark) {
       document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-      document.getElementById('theme-toggle').setAttribute('aria-pressed', String(dark));
       try { localStorage.setItem('agy-hud-theme', dark ? 'dark' : 'light'); } catch {}
     }
 
@@ -879,24 +945,16 @@ p, h1, h2, dl, dd { margin: 0; }
         updateMotion();
       });
 
-      document.getElementById('theme-toggle').addEventListener('click', () => {
-        const isDark = document.documentElement.dataset.theme !== 'dark';
-        setTheme(isDark);
-      });
-
-      document.getElementById('reload-btn').addEventListener('click', async () => {
-        await fetchStats();
-      });
-
       document.getElementById('toggle-agents').addEventListener('click', () => {
         agentsCollapsed = !agentsCollapsed;
         syncSubagentsList();
       });
 
-      // 4. Initial Theme & Motion
+      // 4. Initial Theme & Motion: sem botão, segue o sistema se não houver escolha salva.
       try {
         const savedTheme = localStorage.getItem('agy-hud-theme');
-        setTheme(savedTheme === 'dark' || (!savedTheme && true));
+        const prefersLight = matchMedia('(prefers-color-scheme: light)').matches;
+        setTheme(savedTheme ? savedTheme === 'dark' : !prefersLight);
       } catch {
         setTheme(true);
       }
@@ -905,9 +963,9 @@ p, h1, h2, dl, dd { margin: 0; }
       // 5. Initial Mascot display
       document.getElementById('companion-slot').innerHTML = mascot('idle', 72);
 
-      // 6. Start Polling
+      // 6. Start Polling: 5s é o suficiente para acompanhar sem martelar o host.
       await fetchStats();
-      setInterval(fetchStats, 1500);
+      setInterval(fetchStats, 5000);
     }
 
     init();

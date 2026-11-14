@@ -1,3 +1,5 @@
+// Não é mais chamado pelo hook-collector: o painel AGY - UsageHUD é a única
+// interface de métricas. Mantido como histórico do cartão usage-hud.md.
 import fs from 'node:fs'
 import path from 'node:path'
 

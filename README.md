@@ -1,11 +1,11 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/capa-sparky-dark.png">
-  <img src="assets/capa-sparky.png" alt="AGY UsageHUD com Sparky — atividade, contexto e janela de 5 horas no Antigravity" width="1280">
+  <img src="assets/capa-sparky.png" alt="AGY UsageHUD com Sparky — atividade, contexto e cota do modelo no Antigravity" width="1280">
 </picture>
 
 <h1 align="center">AGY UsageHUD</h1>
 
-<p align="center">Plugin independente para o Antigravity, com um painel lateral de atividade da sessão, subagentes, capacidade de contexto e janela de uso de 5 horas. Usa um <strong>sidecar local</strong> para coletar os dados e servir a interface.</p>
+<p align="center">Plugin independente para o Antigravity, com um painel lateral de atividade da sessão, subagentes, contexto real e cota do modelo. Usa um <strong>sidecar local</strong> para coletar os dados e servir a interface.</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Windows-validado-0F3D3A?style=flat-square" alt="Windows validado">
@@ -31,16 +31,19 @@ Interface em português do Brasil. A versão atual foi validada localmente no Wi
 
 ## Demonstração e recursos
 
-<p align="center"><img src="assets/painel.png" alt="Painel UsageHUD com Sparky, subagentes, janela de 5 horas e contexto" width="420"></p>
+<p align="center"><img src="assets/painel.png" alt="Painel UsageHUD com Sparky, subagentes, cota do modelo e contexto" width="420"></p>
 
 Captura da interface do runtime renderizada com dados de demonstração. Os testes visuais utilizam o preload real do Antigravity; a imagem não representa uma sessão ou uma cota real.
 
 - Atividade da sessão com mascote e reações às ferramentas.
-- Acompanhamento dos subagentes com Ocultar/Mostrar, sem controles de interrupção ou cópia.
-- Capacidade de contexto, consumo e tempo restante da janela de 5 horas.
+- Título da sessão igual ao da lista lateral do Antigravity, com modelo e projeto.
+- Contexto lido do transcript: prompt = entrada + cache, sem somar a saída.
+- Acompanhamento dos subagentes com nome, tarefa, atividade e o contexto de cada um.
+- Cota do modelo com percentual só quando o host informa; caso contrário, só o horário de renovação.
 - Temas claro e escuro, pausa das animações e respeito a movimento reduzido.
+- Atualização automática a cada 5 segundos, sem botão de recarregar.
 
-A disponibilidade dos dados depende do Antigravity. A cota usa a informação do host quando acessível; o fallback da janela de 5 horas é uma estimativa baseada nos dados locais. Não substitui a informação oficial de uso da conta.
+A disponibilidade dos dados depende do Antigravity. O título e a árvore de subagentes vêm do `conversation_summaries.db` do app; o contexto vem do `transcript.jsonl` da conversa. A janela do modelo usa uma tabela local (Gemini 1M, Claude 1M, GPT-OSS 128k); para modelo fora da tabela, o painel mostra os tokens e nenhum percentual. A cota usa a informação do host quando acessível e nunca cai para a cota de outro modelo. Não substitui a informação oficial de uso da conta.
 
 ### Conheça o Sparky
 
@@ -70,6 +73,8 @@ Demonstração de nove reações, renderizada a partir das mesmas animações do
 
 O movimento de base combina flutuação em ciclos de 4 segundos, oito quadros de variação de cores em 8 segundos e piscadas em ciclos de 6,5 segundos. A sombra acompanha a flutuação. Esses movimentos não representam percentual de cota nem comprovam, por si só, uma tarefa em execução.
 
+Tecnicamente, o Sparky é um sprite PNG de 32×32 ampliado com `image-rendering: pixelated`. As oito variações de cor são geradas no canvas a partir do mesmo sprite; olhos, óculos, globo, lápis e demais objetos são SVG sobrepostos. O movimento vem de keyframes CSS, não de quadros animados.
+
 O botão de pausa interrompe as animações. Com a preferência de sistema **movimento reduzido**, as animações também são desativadas. Os estados dependem dos eventos e metadados que o Antigravity disponibiliza.
 
 ## Começar a usar
@@ -88,11 +93,12 @@ O script copia o plugin para `%USERPROFILE%\.gemini\config\plugins\usage-hud`. S
 
 No Antigravity, confira o plugin em **Customizations > Installed** e abra o painel **AGY - UsageHUD**. Se o sidecar não aparecer, consulte a configuração de ativação na [documentação oficial de sidecars](https://antigravity.google/docs/sidecars); não substitua seu arquivo de configuração inteiro.
 
-Depois de atualizar apenas a interface, feche e reabra a aba do HUD. Se o aplicativo mantiver a página antiga, reinicie o Antigravity quando ele estiver ocioso. O botão circular do painel atualiza os dados, sem reinstalar ou recarregar a interface. O [guia de atualização](INTEGRACAO-V7.md#carregar-atualizacao) explica os limites desse procedimento.
+Depois de atualizar apenas a interface, feche e reabra a aba do HUD. Se o aplicativo mantiver a página antiga, reinicie o Antigravity quando ele estiver ocioso. O painel consulta os dados sozinho a cada 5 segundos; não há botão de recarregar. O [guia de atualização](INTEGRACAO-V7.md#carregar-atualizacao) explica os limites desse procedimento.
 
 ### Desenvolver e verificar
 
 ```powershell
+node test/metrics.test.mjs
 node test/integration.test.mjs
 node test/ui.test.cjs
 ```

@@ -10,8 +10,16 @@ const preload = fs.readFileSync(process.argv[3] || path.join(os.homedir(), '.gem
 const output = process.argv[4] || fs.mkdtempSync(path.join(os.tmpdir(), 'agy-hud-ui-'));
 fs.mkdirSync(output, { recursive: true });
 
-const agent = { id: 'demo-agent', name: 'HUD Fixer', task: 'Conferindo contraste e layout do painel', detail: 'Lendo arquivo da interface', kind: 'reading', status: 'running' };
-const stats = { hasSession: true, conversationId: 'preview-session', fiveHour: { timeLeftMs: 17974000, resetTime: '19:22', consumedPct: 19 }, context: { tokens: 88900, maxTokens: 1048576, pct: 8.48, remaining: 959676 } };
+const agent = { id: 'demo-agent', name: 'HUD Fixer', task: 'Conferindo contraste e layout do painel', detail: 'Lendo arquivo da interface', kind: 'reading', status: 'running', depth: 1, context: { tokens: 42000, pct: 4 } };
+const stats = {
+  hasSession: true,
+  conversationId: 'preview-session',
+  title: 'Teste de Interface',
+  project: 'Mods-Plugins',
+  model: { name: 'Gemini 4 Hydrogen', effort: 'Medium', window: 1048576 },
+  quota: { exposed: true, consumedPct: 19, remainingPct: 81, resetLabel: 'hoje 19:22', timeLeftMs: 17974000 },
+  context: { tokens: 88900, window: 1048576, pct: 8, free: 959676 },
+};
 let activity = { kind: 'agents', label: 'Coordenando subagentes', detail: '1 de 1 subagente em atividade', subagents: [agent] };
 
 (async () => {
@@ -52,13 +60,20 @@ let activity = { kind: 'agents', label: 'Coordenando subagentes', detail: '1 de 
     assert.equal(await page.locator('.agent-avatar .mascot').count(), 1, 'Task text must not replace the avatar');
     assert.equal(await page.locator('.agent-copy > span').textContent(), agent.task);
     assert.equal(await page.locator('.agent-copy > strong').textContent(), agent.name);
-    assert.equal(await page.locator('.usage-ring').getAttribute('aria-valuenow'), String(stats.fiveHour.consumedPct));
+    assert.equal(await page.locator('#session-title').textContent(), stats.title);
+    assert.equal(await page.locator('.usage-ring').getAttribute('aria-valuenow'), String(stats.quota.consumedPct));
     assert.equal(await page.locator('.context-track').getAttribute('aria-valuenow'), String(stats.context.pct));
+
+    // Sem remainingFraction o painel não pode inventar zero.
+    await page.evaluate(stub => renderTelemetry({ ...stub, quota: { exposed: false, consumedPct: null, remainingPct: null, resetLabel: 'sex 08:44', timeLeftMs: 520303493 } }), stats);
+    assert.equal(await page.locator('#usage-value').textContent(), '–');
+    assert.equal(await page.locator('#usage-caption').textContent(), 'sem percentual');
+    await page.evaluate(stub => renderTelemetry(stub), stats);
 
     for (const theme of ['dark', 'light']) {
       await page.evaluate(dark => setTheme(dark), theme === 'dark');
       await hostTheme();
-      await page.waitForTimeout(200); // Let the existing button color transition settle before screenshots.
+      await page.waitForTimeout(200); // Deixa a transição de cor existente assentar antes das capturas.
       for (const width of [320, 390, 472, 680, 1024]) {
         await page.setViewportSize({ width, height: 862 });
         const result = await page.evaluate(() => {

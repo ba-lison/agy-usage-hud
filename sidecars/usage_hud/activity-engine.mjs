@@ -333,7 +333,7 @@ export function createActivityModel(conversationId) {
   }
 
   function setSubagentsInfo(runningCount, totalCount) {
-    if (totalCount > 0 && activeCalls.size === 0 && kind !== 'model') {
+    if (runningCount > 0 && activeCalls.size === 0 && kind !== 'model') {
       kind = 'agents'
       customDetail = `${runningCount} de ${totalCount} subagente${totalCount > 1 ? 's' : ''} em atividade`
     }

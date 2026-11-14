@@ -2,6 +2,22 @@
 
 Documento técnico de referência sobre a integração da interface V7 com os eventos reais do Antigravity.
 
+## V8 — números reais — 2026-11-14
+
+- **Contexto:** o prompt de cada turno é `input_tokens + cache_read_tokens` do último `PLANNER_RESPONSE`. `output_tokens` não entra na conta; somá-lo inflava o valor.
+- **Título da sessão:** vem de `conversation_summaries.title`, a mesma lista lateral do app. O UUID não aparece mais no cabeçalho.
+- **Subagentes:** vêm de `conversation_summaries.parent_conversation_id`, com `agent_name`, profundidade e o contexto de cada filho lido do próprio transcript. A varredura de todas as pastas e o nome `Subagente` aleatório saíram.
+- **Cota:** usa apenas o modelo da sessão. Sem `remainingFraction` (caso dos modelos Claude), o painel mostra o horário de renovação e nenhum percentual. O fallback que podia exibir a cota do Gemini numa sessão Claude foi removido.
+- **Janela do modelo:** tabela local (Gemini 1M, Claude 1M, GPT-OSS 128k). Modelo fora da tabela mostra tokens e nenhum percentual. O host não expõe esse valor em nenhuma API local.
+- **Interface:** botões de tema e de recarregar removidos; o painel atualiza sozinho a cada 5 s e segue o tema do sistema quando não há escolha salva. Pausa de animação mantida.
+- **Cartão `usage-hud.md`:** o hook deixou de gerá-lo. Ele usava janela de 200k e somava output, então mostrava 94% onde o painel mostra 13%. O painel passa a ser a única fonte.
+- **Limites:** o `agentapi` não expõe kill de subagente e o painel não renderiza acima do prompt. A lista serve para acompanhar; parar continua sendo pedido no chat (`manage_subagents`).
+
+### Carregar a V8
+
+1. Rode `sync.bat` com o Antigravity fechado ou ocioso; ele sobrescreve a cópia em `%USERPROFILE%\.gemini\config\plugins\usage-hud`.
+2. Reabra a aba **AGY - UsageHUD**. Se a página antiga continuar, reinicie o app quando não houver trabalho em execução.
+
 ---
 
 
@@ -16,10 +32,10 @@ Conferido em 2026-11-01. O plugin está instalado em:
 
 1. Os arquivos corrigidos já foram copiados para a instalação local. Não é preciso reinstalar o plugin.
 2. Feche a aba AGY - UsageHUD e abra o painel novamente no Antigravity. O objetivo é recriar a página, que receberá o HTML novo do servidor.
-3. Confira a versão visual: subagentes têm somente Ocultar/Mostrar, sem botões de parar ou copiar; os cards Janela de 5 horas e Contexto têm o mesmo fundo.
+3. Confira a versão visual: subagentes têm somente Ocultar/Mostrar, sem botões de parar ou copiar; os cards Cota do modelo e Contexto têm o mesmo fundo.
 4. Se a aba ainda mostrar os controles antigos, o aplicativo pode ter mantido a página em memória. Quando não houver trabalho em execução, feche e abra o Antigravity e reabra o painel.
 
-O botão circular do HUD é **Atualizar dados**: consulta métricas e atividade; não recarrega o HTML nem instala atualizações.
+O painel não tem botão de recarregar: ele consulta métricas e atividade a cada 5 segundos. Recarregar o HTML instala atualizações; não é preciso reinstalar o plugin.
 
 O servidor ativo foi consultado por HTTP e entregou o arquivo instalado, com hash idêntico. Em 2026-11-01, Bali confirmou que a atualização funcionou ("deu super certo") e pediu o encerramento desta frente. Ele não detalhou se reabriu apenas a aba ou reiniciou o aplicativo. O agente não controlou a janela real. O reload do HTML ao recriar a página é sustentado pelo código de server.mjs, que lê ui.html a cada requisição e envia Cache-Control: no-store.
 
@@ -57,7 +73,7 @@ O servidor ativo foi consultado por HTTP e entregou o arquivo instalado, com has
         │           ├── 1. stdout neutro imediato ({}) — sem bloquear turnos
         │           ├── 2. POST http://127.0.0.1:<port>/api/event (timeout 250ms)
         │           ├── 3. Gravação atômica local em <brain>/<convId>/activity-state.json
-        │           └── 4. Disparo de métricas/handoff em SessionStart, PostInvocation, Stop
+        │           └── 4. stdout neutro imediato ({}) — sem bloquear turnos
         │
         └── Sidecar Runtime (sidecars/usage_hud/)
               ├── server.mjs

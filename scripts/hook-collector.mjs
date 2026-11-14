@@ -154,19 +154,9 @@ async function main() {
     saveAtomicState(artifactDir, sanitized)
   }
 
-  // 3. For SessionStart, PostInvocation and Stop: trigger metric card & handoff update
-  if (['SessionStart', 'PostInvocation', 'Stop'].includes(eventName) && artifactDir) {
-    try {
-      const updateScript = path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1')), 'update-hud.mjs')
-      if (fs.existsSync(updateScript)) {
-        // Run update-hud inline or import if needed
-        const { default: runUpdate } = await import('./update-hud.mjs').catch(() => ({ default: null }))
-        if (typeof runUpdate === 'function') {
-          await runUpdate(raw, artifactDir).catch(() => {})
-        }
-      }
-    } catch {}
-  }
+  // O painel é a única interface de métricas. O cartão usage-hud.md que este
+  // coletor gerava usava outra conta de contexto (200k, somando output) e
+  // aparecia no chat com números diferentes do painel; foi desativado.
 
   // 4. Return stdout contract response (NEUTRAL, never forces allow or continues)
   if (eventName === 'PreToolUse') {

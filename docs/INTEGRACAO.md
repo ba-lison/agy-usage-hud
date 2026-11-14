@@ -8,6 +8,8 @@ Documento técnico de referência sobre a integração do painel com os eventos 
 - **Visual:** cartões de raio 12 px com borda de 1 px, botões de 8 px, contadores em pílula, título da sessão em 16 px e subtítulo em 13,7 px. Contexto em `--chart-1/2/3` na própria barra principal; anel da cota no `--primary`.
 - **Sparky:** cada estado do `activity-engine` tem pose, olhar e acessório próprios, e a troca de estado muda só o `data-state` do SVG existente, com transição. O botão de pausa e o estado `motionPaused`/`data-motion` foram removidos; só o `prefers-reduced-motion` do sistema para as animações.
 - **Prévia:** `preview/index.html`, autocontida, com dados fictícios, as 19 reações (com Concluído e Interrompido transitórios) e um seletor de tema que existe só na prévia.
+- **Abrir o app de novo (2026-11-14):** o painel ignora transcript e `activity-state.json` anteriores ao início do app (`language_server.log` recriado a cada execução); sem sessão desta execução, mostra *Nenhuma sessão* e `– / —` em vez de repetir a conversa de ontem.
+- **Descoberta do Language Server (2026-11-14):** o app sobe dois listeners e a porta muda a cada reinício; o painel testa os candidatos (porta que funcionou, `ANTIGRAVITY_LS_ADDRESS`, log da mais nova para a mais antiga) e só aceita quem devolve o contexto da conversa, descartando a escolha ao primeiro erro.
 - As notas abaixo sobre seletor de tema e pausa de animação valem para as versões anteriores.
 
 ## V8 — números reais — 2026-11-14

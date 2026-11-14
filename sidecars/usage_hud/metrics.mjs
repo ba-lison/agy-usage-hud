@@ -56,9 +56,11 @@ export function transcriptPath(convId, dirs = brainDirs()) {
   return null
 }
 
-export function latestConversationId(dirs = brainDirs()) {
+export function latestConversationId(dirs = brainDirs(), since = 0) {
   // A conversa principal, não um subagente: o painel sem convId deve abrir a
   // sessão que o usuário está vendo, e não o último transcript filho.
+  // `since` corta o que veio de uma execução anterior do app: ao abrir de novo,
+  // o painel começa zerado até a sessão nova gravar o primeiro turno.
   const childIds = new Set(
     summaries()
       .filter(row => Number(row.nesting_depth) > 0)
@@ -78,6 +80,7 @@ export function latestConversationId(dirs = brainDirs()) {
       const file = path.join(dir, entry.name, '.system_generated', 'logs', 'transcript.jsonl')
       try {
         const at = fs.statSync(file).mtimeMs
+        if (at < since) continue
         if (at > latestAt) {
           latestAt = at
           latest = entry.name

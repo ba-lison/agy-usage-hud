@@ -25,6 +25,23 @@ import {
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+// Marca de quando o app subiu. O log do Language Server é recriado a cada
+// execução, então a data de criação dele é o âncora mais estável; se ele não
+// existir, vale o início deste sidecar. Tudo que for mais antigo é sessão da
+// execução anterior e não deve aparecer no painel recém-aberto.
+function appRunStartedAt() {
+  let at = Date.now()
+  try {
+    const roam = process.env.APPDATA || path.join(homeDir(), 'AppData', 'Roaming')
+    const log = path.join(roam, 'Antigravity', 'logs', 'language_server.log')
+    const birth = fs.statSync(log).birthtimeMs
+    if (Number.isFinite(birth) && birth > 0) at = Math.min(at, birth)
+  } catch {}
+  return at
+}
+
+const RUN_STARTED_AT = appRunStartedAt()
+
 // Session state storage: Map<conversationId, ActivityModel>
 const sessionModels = new Map()
 
@@ -408,7 +425,7 @@ async function cancelCascade(cascadeId) {
 /* ---------------- métricas ---------------- */
 
 async function computeMetrics(targetConvId) {
-  const id = targetConvId || latestConversationId()
+  const id = targetConvId || currentConversationId()
   const file = id ? transcriptPath(id) : null
   const raw = id ? modelFor(id) : null
   const reading = file ? contextFromSteps(parseSteps(readTail(file))) : contextFromSteps([])
@@ -460,11 +477,18 @@ function savedActivity(convId) {
   const convDir = path.dirname(path.dirname(path.dirname(file)))
   const stateFile = path.join(convDir, '.system_generated', 'activity-state.json')
   try {
+    // Estado gravado por uma execução anterior do app não vale: descreveria a
+    // sessão de ontem no painel de hoje.
+    if (fs.statSync(stateFile).mtimeMs < RUN_STARTED_AT) return null
     const saved = JSON.parse(fs.readFileSync(stateFile, 'utf8'))
     return saved && saved.conversationId === convId ? saved : null
   } catch {
     return null
   }
+}
+
+function currentConversationId() {
+  return latestConversationId(undefined, RUN_STARTED_AT)
 }
 
 function subagentsFor(convId, parentWindow) {
@@ -482,7 +506,7 @@ function subagentsFor(convId, parentWindow) {
 }
 
 async function computeActivity(targetConvId) {
-  const convId = targetConvId || latestConversationId()
+  const convId = targetConvId || currentConversationId()
   const model = getSessionModel(convId)
   let snap = model ? model.snapshot() : null
 

@@ -451,4 +451,60 @@ console.log('\n8. Validando descoberta do Language Server (porta nova morta, ant
 }
 console.log('   ✓ Porta morta é descartada e o limite vem do Language Server vivo.')
 
+// 9. App recém-aberto: nenhuma sessão desta execução, painel vazio.
+console.log('\n9. Validando painel zerado ao abrir o app (sessão de ontem não conta)...')
+{
+  const serverPath = path.resolve(__dirname, '../sidecars/usage_hud/server.mjs')
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'agy-hud-fresh-'))
+  const convId = 'conv-de-ontem'
+  const logs = path.join(home, '.gemini', 'antigravity', 'brain', convId, '.system_generated', 'logs')
+  fs.mkdirSync(logs, { recursive: true })
+  const transcript = path.join(logs, 'transcript.jsonl')
+  fs.writeFileSync(transcript, JSON.stringify({ type: 'PLANNER_RESPONSE', input_tokens: 90000, output_tokens: 10 }) + '\n')
+  const old = new Date(Date.now() - 3 * 3600_000)
+  fs.utimesSync(transcript, old, old)
+
+  const env = { ...process.env, USERPROFILE: home, HOME: home, APPDATA: path.join(home, 'AppData'), ANTIGRAVITY_SIDECAR_WEB_PORT: '0', USAGE_HUD_NO_INFO: '1' }
+  delete env.ANTIGRAVITY_CSRF_TOKEN
+  delete env.ANTIGRAVITY_LS_ADDRESS
+  const sidecar = spawn(process.execPath, [serverPath], { env })
+  let output = ''
+  sidecar.stdout.on('data', chunk => (output += chunk))
+  sidecar.stderr.on('data', () => {})
+  const port = await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('sidecar não iniciou a tempo')), 8000)
+    sidecar.stdout.on('data', () => {
+      const match = /127\.0\.0\.1:(\d+)/.exec(output)
+      if (!match) return
+      clearTimeout(timer)
+      resolve(Number(match[1]))
+    })
+    sidecar.on('exit', code => { clearTimeout(timer); reject(new Error(`sidecar saiu com código ${code}`)) })
+  })
+
+  try {
+    const stats = await (await fetch(`http://127.0.0.1:${port}/api/stats`)).json()
+    assert.equal(stats.conversationId, null, 'sem convId, a sessão de ontem não é adotada')
+    assert.equal(stats.hasSession, false)
+    assert.equal(stats.context.tokens, null, 'nenhum token inventado')
+    assert.equal(stats.context.window, null)
+
+    const activity = await (await fetch(`http://127.0.0.1:${port}/api/activity`)).json()
+    assert.equal(activity.kind, 'idle')
+    assert.match(activity.detail, /Nenhuma sess/i)
+
+    // A sessão desta execução aparece assim que existe.
+    const fresh = path.join(home, '.gemini', 'antigravity', 'brain', 'conv-de-agora', '.system_generated', 'logs')
+    fs.mkdirSync(fresh, { recursive: true })
+    fs.writeFileSync(path.join(fresh, 'transcript.jsonl'), JSON.stringify({ type: 'PLANNER_RESPONSE', input_tokens: 1234, output_tokens: 5 }) + '\n')
+    const next = await (await fetch(`http://127.0.0.1:${port}/api/stats?_t=1`)).json()
+    assert.equal(next.conversationId, 'conv-de-agora', 'a conversa nova entra no lugar')
+    assert.equal(next.context.tokens, 1234)
+  } finally {
+    sidecar.kill()
+    fs.rmSync(home, { recursive: true, force: true })
+  }
+}
+console.log('   ✓ Painel abre zerado e adota a sessão nova quando ela existe.')
+
 console.log('\n🎉 Todos os testes de integração foram executados e passaram com 100% de sucesso!')

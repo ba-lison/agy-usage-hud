@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 import {
   contextFromSteps,
   contextPct,
+  latestConversationId,
   modelFromSteps,
   parseDbTime,
   projectOf,
@@ -79,5 +83,30 @@ console.log('   ✓ Cota exposta e cota ausente tratadas de forma diferente.')
   assert.equal(projectOf(''), null)
 }
 console.log('   ✓ Timestamp do SQLite e nome do projeto.')
+
+// 7. Sessão de ontem não conta como sessão de agora.
+{
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'agy-hud-latest-'))
+  const brain = path.join(home, 'brain')
+  const write = (convId, at) => {
+    const dir = path.join(brain, convId, '.system_generated', 'logs')
+    fs.mkdirSync(dir, { recursive: true })
+    const file = path.join(dir, 'transcript.jsonl')
+    fs.writeFileSync(file, '{}\n')
+    fs.utimesSync(file, at, at)
+  }
+  const old = new Date(Date.now() - 3 * 3600_000)
+  const fresh = new Date(Date.now() - 5_000)
+  write('conv-ontem', old)
+  write('conv-hoje', fresh)
+
+  assert.equal(latestConversationId([brain], 0), 'conv-hoje')
+  assert.equal(latestConversationId([brain], Date.now() - 3600_000), 'conv-hoje')
+  assert.equal(latestConversationId([brain], Date.now() - 60_000), 'conv-hoje', 'só a sessão desta execução')
+  assert.equal(latestConversationId([brain], Date.now() + 60_000), null, 'sem sessão nova, nada aparece')
+
+  fs.rmSync(home, { recursive: true, force: true })
+}
+console.log('   ✓ Abrir o app de novo não revive a sessão anterior.')
 
 console.log('\n🎉 Métricas validadas.')

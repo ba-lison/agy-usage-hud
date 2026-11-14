@@ -856,6 +856,7 @@ p, h1, h2, dl, dd { margin: 0; }
     }
 
     let lastContext = null;
+    let lastHasSession = false;
     let lastMcp = null;
     let mcpSignature = '';
     let contextOpen = false;
@@ -933,6 +934,11 @@ p, h1, h2, dl, dd { margin: 0; }
       const note = document.getElementById('context-source-note');
       const { rows, window, total, free } = contextRows(ctx || {});
       list.replaceChildren();
+
+      if (!lastHasSession) {
+        note.textContent = 'Sem sessão ativa. Abra uma conversa no Antigravity.';
+        return;
+      }
 
       if (window === null || total === null) {
         note.textContent = 'O Language Server não informou o limite desta sessão; só os tokens estão disponíveis.';
@@ -1055,8 +1061,12 @@ p, h1, h2, dl, dd { margin: 0; }
     function renderTelemetry(data) {
       if (!data) return;
 
-      // Sessão: o título é o mesmo da lista lateral do Antigravity.
-      const title = data.title || 'Sessão ativa';
+      // Sessão: o título é o mesmo da lista lateral do Antigravity. Sem sessão
+      // desta execução, o painel fica explicitamente vazio em vez de repetir a
+      // conversa de ontem.
+      const active = Boolean(data.conversationId);
+      lastHasSession = active;
+      const title = data.title || (active ? 'Sessão ativa' : 'Nenhuma sessão');
       const titleEl = document.getElementById('session-title');
       titleEl.textContent = title;
       titleEl.title = title;
@@ -1064,7 +1074,9 @@ p, h1, h2, dl, dd { margin: 0; }
       const modelLabel = model.name
         ? `${model.name}${model.effort ? ` · ${model.effort}` : ''}`
         : 'Modelo não identificado';
-      document.getElementById('session-sub').textContent = [modelLabel, data.project].filter(Boolean).join(' · ');
+      document.getElementById('session-sub').textContent = active
+        ? [modelLabel, data.project].filter(Boolean).join(' · ')
+        : 'Abra uma conversa no Antigravity';
 
       // Cota do modelo
       const quota = data.quota || {};
@@ -1078,20 +1090,22 @@ p, h1, h2, dl, dd { margin: 0; }
 
       // Contexto
       const ctx = data.context || {};
-      const tokens = typeof ctx.tokens === 'number' ? ctx.tokens : null;
-      const max = typeof ctx.window === 'number' ? ctx.window : null;
-      const pct = typeof ctx.pct === 'number' ? ctx.pct : 0;
+      const tokens = active && typeof ctx.tokens === 'number' ? ctx.tokens : null;
+      const max = active && typeof ctx.window === 'number' ? ctx.window : null;
+      const pct = active && typeof ctx.pct === 'number' ? ctx.pct : 0;
 
       document.getElementById('context-num').textContent = tokens === null ? '–' : formatNumber(tokens);
       document.getElementById('context-max-label').textContent = max === null ? '—' : formatNumber(max);
       document.getElementById('context-max-label').title = max === null
         ? 'O Language Server não informou o limite desta sessão'
         : 'Limite informado pelo Language Server do Antigravity';
-      document.getElementById('context-footer-tokens').textContent = tokens === null
-        ? 'Sem leitura do transcript'
-        : max === null
-          ? `${formatNumber(tokens)} tokens no prompt · limite não exposto`
-          : `${formatNumber(tokens)} de ${formatNumber(max)} tokens`;
+      document.getElementById('context-footer-tokens').textContent = !active
+        ? 'Sem sessão ativa'
+        : tokens === null
+          ? 'Sem leitura do transcript'
+          : max === null
+            ? `${formatNumber(tokens)} tokens no prompt · limite não exposto`
+            : `${formatNumber(tokens)} de ${formatNumber(max)} tokens`;
       document.getElementById('context-free-label').textContent = max !== null && typeof ctx.free === 'number'
         ? `${pct}% · ${formatNumber(ctx.free)} livres`
         : '';

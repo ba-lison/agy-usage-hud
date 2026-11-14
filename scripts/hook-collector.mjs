@@ -11,6 +11,7 @@ import os from 'node:os'
 import { classifyTool, describeCall } from '../sidecars/usage_hud/activity-engine.mjs'
 
 const MAX_STDIN_BYTES = 1024 * 1024 // 1MB limit for hook payload
+const EVENT_NAME = process.argv[2] || 'unknown'
 
 function getHomeDir() {
   return process.env.USERPROFILE || process.env.HOME || os.homedir()
@@ -105,7 +106,7 @@ function saveAtomicState(artifactDir, sanitizedEvent) {
 }
 
 async function main() {
-  const eventName = process.argv[2] || 'unknown'
+  const eventName = EVENT_NAME
   const rawStdin = await readStdin()
 
   let raw = {}
@@ -158,18 +159,17 @@ async function main() {
   // coletor gerava usava outra conta de contexto (200k, somando output) e
   // aparecia no chat com números diferentes do painel; foi desativado.
 
-  // 4. Return stdout contract response (NEUTRAL, never forces allow or continues)
-  if (eventName === 'PreToolUse') {
-    // Neutral decision: do not override agent policy
-    process.stdout.write('{}\n')
-  } else if (eventName === 'Stop') {
-    // Empty decision allows the agent loop to stop normally
-    process.stdout.write('{}\n')
-  } else {
-    process.stdout.write('{}\n')
-  }
+  // 4. stdout contract: PreToolUse and Stop require a "decision". An empty
+  // object fails the host schema and blocks every tool call, so the collector
+  // declares "allow" (delegates to the next hook or the default policy) and
+  // lets the stop proceed. It never auto-approves or forces execution.
+  respond()
 }
 
-main().catch(() => {
-  process.stdout.write('{}\n')
-})
+function respond() {
+  if (EVENT_NAME === 'PreToolUse') process.stdout.write('{"decision":"allow"}\n')
+  else if (EVENT_NAME === 'Stop') process.stdout.write('{"decision":"stop"}\n')
+  else process.stdout.write('{}\n')
+}
+
+main().catch(respond)

@@ -2,6 +2,13 @@
 
 Documento técnico de referência sobre a integração do painel com os eventos reais do Antigravity e o histórico de cada versão.
 
+## 1.3.5 — hook não bloqueia mais as ferramentas — 2026-11-14
+
+- **Sintoma:** com o plugin ativo, toda ferramenta (`read_file`, `run_command`, inclusive na raiz do workspace) era recusada com `tool call denied by pre-tool hook:` e motivo vazio.
+- **Causa:** o contrato de `PreToolUse` do Antigravity exige o campo `decision` (`allow`, `auto_approve`, `deny`, `ask`, `force_ask` ou `deny_unless_prior_grant`). O coletor devolvia `{}`; sem decisão, o host considera o hook inválido e nega a chamada.
+- **Correção:** `PreToolUse` responde `{"decision":"allow"}`, que delega ao próximo hook e à política normal do app; `Stop` responde `{"decision":"stop"}` (qualquer valor diferente de `continue` permite parar); os eventos informativos continuam com `{}`. O coletor não aprova automaticamente nem altera argumentos.
+- **Verificação:** execução direta do coletor nos seis eventos. A validação dentro do app depende de reiniciar o Antigravity para recarregar o plugin. O painel, as métricas e os demais hooks não mudam.
+
 ## V9: desenho nativo (2026-11-15)
 
 - **Tema:** o painel segue o tema do Antigravity. `applyHostTheme()` converte as variáveis do `theme-change` (`--background`, `--card`, `--card-border`, `--border`, `--primary`, `--muted-foreground`, `--chart-*` etc.) em tokens `--hud-*`; aceita hex, `color-mix()` e o trio HSL do shadcn. Sem host, valem os valores do Legacy Dark e do Default Light. Saíram a lógica de `prefers-color-scheme`, o `localStorage` de tema e o `setTheme()`.
@@ -172,7 +179,7 @@ O painel envia `POST /api/subagents/stop` com a conversa pai e o id do filho. O 
 
 ## 5. Resiliência e Concorrência
 
-- **Zero Bloqueio:** Os hooks respondem `{}` imediatamente no stdout para `PreToolUse` e `Stop`. Se o servidor sidecar estiver inacessível ou o timeout de 250ms expirar, o coletor silencia e permite a continuidade da sessão do Antigravity sem interrupção.
+- **Zero Bloqueio:** Os hooks respondem imediatamente no stdout: `{"decision":"allow"}` no `PreToolUse` (delega ao próximo hook e à política do app), `{"decision":"stop"}` no `Stop` e `{}` nos eventos informativos. Se o servidor sidecar estiver inacessível ou o timeout de 250ms expirar, o coletor silencia e permite a continuidade da sessão do Antigravity sem interrupção.
 - **Gravação Atômica:** Estados de atividade são gravados com sufixo `.tmp.<pid>` e renomeados atomicamente, prevenindo corrupção em chamadas concorrentes de múltiplos hooks.
 - **Assets Embutidos:** A fonte Google Sans Flex está embutida diretamente no `ui.html` como data URI WOFF2, eliminando qualquer dependência de CDNs ou acesso externo.
 

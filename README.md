@@ -1,131 +1,132 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/capa-sparky-dark.png">
-  <img src="assets/capa-sparky.png" alt="AGY UsageHUD com Sparky — atividade, contexto e cota do modelo no Antigravity" width="1280">
+  <img src="assets/capa-sparky.png" alt="AGY UsageHUD with Sparky — session activity, context and model quota in Antigravity" width="1280">
 </picture>
 
 <h1 align="center">AGY UsageHUD</h1>
 
-<p align="center">Saiba quanto contexto e cota ainda restam no Antigravity. Plugin independente com painel lateral de uso de tokens, limite real da janela, subagentes e atividade da sessão, servido por um <strong>sidecar local</strong>.</p>
+<p align="center">Know how much context and quota you have left in Antigravity. An independent plugin with a side panel for token usage, the real context window, subagents and session activity, served by a <strong>local sidecar</strong>.</p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Windows-validado-0F3D3A?style=flat-square" alt="Windows validado">
+  <img src="https://img.shields.io/badge/Windows-validated-0F3D3A?style=flat-square" alt="Validated on Windows">
   <img src="https://img.shields.io/badge/Node.js-22%2B-161616?style=flat-square" alt="Node.js 22+">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/Licen%C3%A7a-MIT-0F3D3A?style=flat-square" alt="Licença MIT"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-0F3D3A?style=flat-square" alt="MIT license"></a>
 </p>
 
 <p align="center">
-  <a href="#começar-a-usar">Começar a usar</a> &nbsp; / &nbsp;
-  <a href="#demonstração-e-recursos">Ver recursos</a> &nbsp; / &nbsp;
-  <a href="#documentação-e-ajuda">Documentação</a>
+  <a href="#getting-started">Get started</a> &nbsp; / &nbsp;
+  <a href="#demo-and-features">See features</a> &nbsp; / &nbsp;
+  <a href="#documentation-and-help">Documentation</a> &nbsp; · &nbsp;
+  <a href="README.pt-BR.md">Português</a>
 </p>
 
 ---
 
-## Sobre o projeto
+## About the project
 
-O Antigravity não mostra, durante o trabalho, quanto da janela de contexto você já gastou nem quanto ainda falta. Você descobre o limite quando bate nele. O UsageHUD põe essa informação na lateral da sessão e atualiza sozinho a cada 5 segundos.
+Antigravity does not show, while you work, how much of the context window you have already used or how much is left. You find out the limit when you hit it. UsageHUD puts that information beside the session and refreshes it every 5 seconds.
 
-O painel lê o `contextWindowUsage` do Language Server do próprio app e mostra o total usado, o limite efetivo da sessão, os grupos de tokens (mensagens, prompt de sistema e ferramentas), a cota do modelo e os subagentes em execução, cada um com o próprio contexto. **Sparky**, o mascote de estrelinha com olhos, acompanha atividades como leitura de arquivos, pesquisa, edição e uso do terminal.
+The panel reads `contextWindowUsage` from the app's own Language Server and shows the total used, the session's effective limit, the token groups (messages, system prompt and tools), the model quota and the running subagents, each with its own context. **Sparky**, a star mascot with eyes, follows activities such as reading files, searching, editing and using the terminal.
 
-O plugin reúne manifesto, hooks, uma skill de handoff e um sidecar. O Antigravity gerencia o processo do sidecar; ele executa um servidor HTTP em loopback e fornece a página do painel. É uma integração local com o aplicativo, sem publicação no marketplace oficial.
+The plugin bundles a manifest, hooks, a handoff skill and a sidecar. Antigravity manages the sidecar process; it runs an HTTP server on loopback and serves the panel page. It is a local integration with the app, with no publication in the official marketplace.
 
-Interface em português do Brasil. A versão 1.3.3 foi validada localmente no Windows em 14/11/2026, com o painel abrindo zerado ao reiniciar o app. A integração pode precisar de ajustes quando o Antigravity mudar seus formatos ou interfaces.
+The interface is in Brazilian Portuguese; this README is the English version. Version 1.3.3 was validated locally on Windows on 2026-11-14, with the panel opening empty after an app restart. The integration may need adjustments when Antigravity changes its formats or interfaces.
 
-## Demonstração e recursos
+## Demo and features
 
-<p align="center"><img src="assets/painel.png" alt="Painel UsageHUD com Sparky, subagentes, cota do modelo e contexto" width="420"></p>
+<p align="center"><img src="assets/painel.png" alt="UsageHUD panel with Sparky, subagents, model quota and context" width="420"></p>
 
-Captura da interface com dados fictícios, no tema Legacy Dark. Não representa uma sessão nem uma cota real.
+Screenshot of the interface with fictional data, in the Legacy Dark theme. It does not represent a real session or quota.
 
-- Atividade da sessão com mascote e reações às ferramentas.
-- Título da sessão igual ao da lista lateral do Antigravity, com modelo e projeto.
-- Contexto e limite efetivo lidos do Language Server, com detalhamento por grupo e barra colorida.
-- Ferramentas MCP configuradas, agrupadas por servidor, com o tamanho do schema.
-- Acompanhamento dos subagentes com o nome da aba Overview, tarefa, atividade e o contexto de cada um.
-- Parar um subagente em execução pelo painel, com confirmação em dois cliques, como o botão "Stop Subagent" da aba Overview.
-- Cota do modelo com percentual só quando o host informa; caso contrário, só o horário de renovação.
-- Cores, borda e raio do tema ativo do Antigravity: o painel muda de tema junto com o app, sem seletor próprio.
-- Atualização automática a cada 5 segundos, sem botão de recarregar.
-- Painel zerado ao reiniciar o app: a conversa de ontem não aparece antes da primeira mensagem desta execução.
+- Session activity with a mascot and reactions to tools.
+- Session title identical to the Antigravity sidebar, with model and project.
+- Context and the effective limit read from the Language Server, with a per-group breakdown and a colored bar.
+- Configured MCP tools, grouped by server, with each schema size.
+- Subagent tracking with the Overview tab name, task, activity and each one's context.
+- Stop a running subagent from the panel, with two-click confirmation, like the "Stop Subagent" button in the Overview tab.
+- Model quota with a percentage only when the host provides one; otherwise, only the renewal time.
+- Colors, border and radius from the active Antigravity theme: the panel switches themes with the app and has no selector of its own.
+- Automatic refresh every 5 seconds, with no reload button.
+- Empty panel after restarting the app: yesterday's conversation does not appear before the first message of this run.
 
-O HUD roda no **Antigravity App** no Windows. Sidecars existem só no aplicativo, então o painel não funciona no IDE nem no CLI; essas superfícies têm outras fontes de dado e não são cobertas por esta versão.
+The HUD runs in the **Antigravity App** on Windows. Sidecars only exist in the app, so the panel does not work in the IDE or the CLI; those surfaces have other data sources and are not covered by this version.
 
-A disponibilidade dos dados depende do Antigravity. O título e a árvore de subagentes vêm do `conversation_summaries.db` do app; o nome de cada subagente é o `Role` do `invoke_subagent`; o contexto vem do `transcript.jsonl` da conversa. O total do contexto, o limite efetivo e os grupos de tokens vêm do `contextWindowUsage` do Language Server. No teste de 2026-11-14, o Gemini 4 Hydrogen apareceu com **256k de limite efetivo** e 141,1k usados (55%), não 1M. Sem resposta do Language Server, o painel mostra só os tokens e não inventa limite. A cota usa a informação do host quando acessível e nunca cai para a cota de outro modelo. A parada usa o RPC `CancelCascadeInvocation` do Language Server, o mesmo caminho da aba Overview. Não substitui a informação oficial de uso da conta.
+Data availability depends on Antigravity. The title and the subagent tree come from the app's `conversation_summaries.db`; each subagent name is the `Role` of the `invoke_subagent` call; the context comes from the conversation's `transcript.jsonl`. The context total, the effective limit and the token groups come from the Language Server's `contextWindowUsage`. In the 2026-11-14 test, Gemini 4 Hydrogen showed **an effective limit of 256k** with 141.1k used (55%), not 1M. Without a Language Server response, the panel shows only the tokens and invents no limit. The quota uses the host information when available and never falls back to another model's quota. Stop uses the Language Server's `CancelCascadeInvocation` RPC, the same path as the Overview tab. It does not replace the official account usage information.
 
-### Detalhes do contexto
+### Context details
 
-O cartão Contexto abre um detalhamento com a barra empilhada e os grupos que o Antigravity expõe: **Mensagens**, **Prompt de sistema** e **Ferramentas**, mais o **Livre**. O botão **Ferramentas MCP** abre os servidores configurados no `mcp_config.json` (não necessariamente os montados nesta sessão) e as ferramentas de cada um. O host informa o total de Ferramentas, mas não separa tokens por ferramenta; o tamanho do schema de cada uma aparece em KB.
+The Context card opens a breakdown with the stacked bar and the groups Antigravity exposes: **Messages**, **System prompt** and **Tools**, plus **Free**. The **MCP tools** button opens the servers configured in `mcp_config.json` (not necessarily the ones mounted in this session) and each one's tools. The host reports the Tools total but does not split tokens per tool; each schema size appears in KB.
 
 <figure>
-  <img src="assets/contexto.png" alt="Detalhamento do contexto no UsageHUD: 141,1k de 256k, barra com Mensagens, Prompt de sistema, Ferramentas e Livre, e a lista de ferramentas MCP" width="420">
-  <figcaption><sub>Mesmos dados de demonstração; o detalhamento abre no cartão Contexto e as ferramentas MCP abrem em um segundo nível.</sub></figcaption>
+  <img src="assets/contexto.png" alt="Context breakdown in UsageHUD: 141.1k of 256k, a bar with Messages, System prompt, Tools and Free, and the MCP tool list" width="420">
+  <figcaption><sub>Same demo data; the breakdown opens on the Context card and the MCP tools open on a second level.</sub></figcaption>
 </figure>
 
-### Tema nativo
+### Native theme
 
-O painel lê as variáveis que o Antigravity envia ao sidecar no evento `theme-change` (`--background`, `--foreground`, `--card`, `--card-border`, `--border`, `--primary`, `--secondary`, `--muted-foreground`, `--chart-1` a `--chart-6`, entre outras) e acompanha a troca de tema do app. Fora do host, ou se faltar alguma variável, valem os valores do Legacy Dark e do Default Light, extraídos do renderer do app em 14/11/2026:
+The panel reads the variables Antigravity sends to the sidecar in the `theme-change` event (`--background`, `--foreground`, `--card`, `--card-border`, `--border`, `--primary`, `--secondary`, `--muted-foreground`, `--chart-1` to `--chart-6`, among others) and follows the app's theme changes. Outside the host, or when a variable is missing, the Legacy Dark and Default Light values extracted from the app renderer on 2026-11-14 apply:
 
-| Token | Legacy Dark | Default Light | Uso no painel |
+| Token | Legacy Dark | Default Light | Use in the panel |
 | --- | --- | --- | --- |
-| `--background` | `#101010` | `#FFFFFF` | Fundo |
-| `--card` | `#191919` | `#FFFFFF` | Cartões |
-| `--card-border` | `#222222` | `rgb(10 10 12 / 0.12)` | Borda dos cartões |
-| `--foreground` | `#CCCCCC` | `#0A0A0C` | Texto |
-| `--muted-foreground` | `#6E6E6E` | `#52525B` | Texto secundário, misturado com 30% do foreground para ficar acima de 4,5:1 no escuro |
-| `--primary` | `#007ACC` | `#2560A3` | Anel da cota e ponto do título |
-| `--chart-1` | `#60A5FA` | `#1D4ED8` | Mensagens e acessórios do Sparky |
-| `--chart-2` | `#FBBF24` | `#B45309` | Ferramentas |
-| `--chart-3` | `#34D399` | `#15803D` | Prompt de sistema |
+| `--background` | `#101010` | `#FFFFFF` | Background |
+| `--card` | `#191919` | `#FFFFFF` | Cards |
+| `--card-border` | `#222222` | `rgb(10 10 12 / 0.12)` | Card border |
+| `--foreground` | `#CCCCCC` | `#0A0A0C` | Text |
+| `--muted-foreground` | `#6E6E6E` | `#52525B` | Secondary text, mixed with 30% of the foreground to stay above 4.5:1 in dark mode |
+| `--primary` | `#007ACC` | `#2560A3` | Quota ring and title dot |
+| `--chart-1` | `#60A5FA` | `#1D4ED8` | Messages and Sparky accessories |
+| `--chart-2` | `#FBBF24` | `#B45309` | Tools |
+| `--chart-3` | `#34D399` | `#15803D` | System prompt |
 
-Os cartões têm raio de 12 px e borda de 1 px; botões usam 8 px e os contadores são pílulas. A fonte é a Google Sans Flex, embutida no HTML, com base de 16 px. O anel da cota troca o `--primary` pelo `--warning` a partir de 80% e pelo `--error` a partir de 95%.
+Cards have a 12 px radius and a 1 px border; buttons use 8 px and counters are pills. The typeface is Google Sans Flex, embedded in the HTML, with a 16 px base. The quota ring switches `--primary` to `--warning` from 80% and to `--error` from 95%.
 
-A prévia [`preview/index.html`](preview/index.html) abre direto no navegador, sem servidor. Ela mostra o painel em 472 px com dados fictícios, as 19 reações do Sparky e um seletor claro/escuro que existe só na prévia.
+The [`preview/index.html`](preview/index.html) preview opens directly in the browser, with no server. It shows the 472 px panel with fictional data, the 19 Sparky reactions and a light/dark selector that exists only in the preview.
 
-O painel não abre sozinho ao iniciar o app: o `sidecar.json` não tem campo de auto-open e o Antigravity abre o Overview nativo por padrão. O HUD abre pela linha **Extensions** ou pela aba do painel lateral; se a aba estava aberta ao fechar, o app pode restaurá-la, mas não há garantia documentada.
+The panel does not open by itself when the app starts: `sidecar.json` has no auto-open field and Antigravity opens the native Overview by default. The HUD opens from the **Extensions** row or the side panel tab; if the tab was open when you closed the app, it may be restored, but that is not documented as guaranteed.
 
-### Conheça o Sparky
+### Meet Sparky
 
-Sparky é a estrelinha colorida com olhos de bloco que acompanha a sessão. As expressões, os acessórios e os movimentos ajudam a reconhecer a atividade sem precisar ler cada chamada de ferramenta.
+Sparky is the colored star with block eyes that follows the session. Expressions, accessories and movements help you recognize the activity without reading every tool call.
 
-<p align="center"><img src="assets/sparky-reacoes.png" alt="As 19 reações do Sparky em grade: à disposição, pesquisa na web, lendo uma página, usando o navegador, lendo um arquivo, buscando no projeto, editando arquivo, comando no terminal, coordenando subagentes, pergunta, gerando imagem, usando ferramenta, pensando, timer em segundo plano, aguardando, turno encerrado, concluído, interrompido e erro" width="540"></p>
+<p align="center"><img src="assets/sparky-reacoes.png" alt="The 19 Sparky reactions in a grid: idle, web search, reading a page, using the browser, reading a file, searching the project, editing a file, terminal command, coordinating subagents, question, generating an image, using a tool, thinking, background timer, waiting, turn ended, done, interrupted and error" width="540"></p>
 
-As 19 reações, uma por estado do `activity-engine`, capturadas da prévia. Lá elas estão animadas e, ao clicar numa delas, o painel faz a transição para aquele estado. Concluído, Interrompido, Erro e Turno encerrado são transitórios: duram cerca de 6 s e assentam em À disposição (ou em Aguardando, se o `Stop` vier com `fullyIdle:false`).
+The 19 reactions, one per `activity-engine` state, captured from the preview. There they are animated, and clicking one makes the panel transition to that state. Done, Interrupted, Error and Turn ended are transient: they last about 6 s and settle into Idle (or Waiting, when the `Stop` arrives with `fullyIdle:false`).
 
-A galeria [`sparky/sparky.html`](sparky/sparky.html) abre a mesma coisa sozinha, sem servidor: as 19 reações animadas, com seletor de tema e os SVGs soltos em `sparky/sprites/`.
+The [`sparky/sparky.html`](sparky/sparky.html) gallery opens the same thing on its own, with no server: the 19 animated reactions, with a theme selector and the loose SVGs in `sparky/sprites/`.
 
-| Reação | Quando aparece | O que muda no Sparky |
+| Reaction | When it appears | What changes in Sparky |
 | --- | --- | --- |
-| À disposição | Aguardando a próxima mensagem | Olhos abertos, piscadas, flutuação suave e, de vez em quando, um olhar para os lados. |
-| Pensando | O modelo prepara a próxima resposta | O corpo sobe e inclina, os olhos semicerrados olham para cima e aparece um balão com três pontos. |
-| Pesquisa na web | Chamada de `search_web` | Inclina na direção de um globo que gira, com o olhar percorrendo o ambiente. |
-| Usando o navegador | Chamada de `webview_browser` | Janela de navegador com um cursor que vai até o link e clica. |
-| Lendo uma página | Chamada de `read_url_content` | Óculos, olhos menores e uma janela de navegador com uma faixa que desce pelas linhas. |
-| Lendo um arquivo | Chamada de `read_file` ou `view_file` | Óculos, olhar que acompanha as linhas e uma lupa passando pela folha. |
-| Buscando no projeto | Busca ou listagem de arquivos | Um olho mais fechado, olhar inquieto e lupa sobre uma pasta. |
-| Editando arquivo | Escrita ou alteração de um arquivo | Olhos estreitos, corpo inclinado, linhas que vão sendo escritas e lápis em movimento. |
-| Comando no terminal | Execução de comando ou gestão de tarefa | Flutuação mais rápida, olhar concentrado e um terminal com texto sendo digitado e cursor piscando. |
-| Coordenando subagentes | Ferramentas de subagentes ou subagentes ativos | Corpo erguido e dois mini Sparkys flutuando, ligados por linhas tracejadas. A lista mostra os agentes detectados. |
-| Pergunta para você | Pergunta ou pedido de permissão | Cabeça inclinada, olhos assimétricos e um balão com interrogação que pulsa. |
-| Gerando imagem | Chamada de `generate_image` | Olhos bem abertos, uma moldura com paisagem e um brilho que pisca. |
-| Usando ferramenta | Ferramenta sem reação própria | Duas engrenagens girando em sentidos opostos. |
-| Timer em segundo plano | Chamada de `schedule` | Corpo baixo, flutuação lenta e um cronômetro com o ponteiro girando. |
-| Aguardando próxima ação | Uma chamada retornou e a sessão aguarda o próximo passo | Corpo mais baixo, flutuação lenta e uma ampulheta que vira. |
-| Turno encerrado | `Stop` com fim não normal (`MAX_INVOCATIONS`, `MAX_FORCED_INVOCATIONS`, `TERMINAL_STEP_TYPE`, `TERMINAL_CUSTOM_HOOK` ou sem motivo) | Olhos fechados, corpo em repouso e um "z" subindo. Não confirma que a tarefa deu certo. |
-| Concluído | `Stop` com `NO_TOOL_CALL` e linhas de subagentes que terminaram | Três pulinhos, olhos felizes (^ ^) e faíscas piscando. |
-| Interrompido | `Stop` com `USER_CANCELED` e subagente parado pelo painel ou pelo app | Treme de raiva, sobrancelhas franzidas, olhos apertados, uma gota escorrendo e um suspiro. |
-| Erro na ferramenta | `PostToolUse` com `error` preenchido (cerca de 4 s) ou `Stop` com `ERROR` | Treme três vezes e assenta, com olhos desiguais e um triângulo de alerta piscando. |
+| Idle | Waiting for the next message | Open eyes, blinking, a soft float and, now and then, a glance to the sides. |
+| Thinking | The model prepares the next response | The body rises and tilts, half-closed eyes look up and a speech bubble with three dots appears. |
+| Web search | `search_web` call | Tilts toward a spinning globe, with the gaze sweeping the environment. |
+| Using the browser | `webview_browser` call | A browser window with a cursor that reaches the link and clicks. |
+| Reading a page | `read_url_content` call | Glasses, smaller eyes and a browser window with a band that scrolls down the lines. |
+| Reading a file | `read_file` or `view_file` call | Glasses, a gaze that follows the lines and a magnifier moving across the page. |
+| Searching the project | File search or listing | One eye more closed, a restless gaze and a magnifier over a folder. |
+| Editing a file | Writing or changing a file | Narrow eyes, a tilted body, lines being written and a moving pencil. |
+| Terminal command | Command execution or task management | Faster floating, a focused gaze and a terminal with text being typed and a blinking cursor. |
+| Coordinating subagents | Subagent tools or active subagents | An upright body and two mini Sparkys floating, linked by dashed lines. The list shows the detected agents. |
+| Question for you | Question or permission request | A tilted head, asymmetric eyes and a bubble with a pulsing question mark. |
+| Generating an image | `generate_image` call | Wide-open eyes, a frame with a landscape and a blinking glow. |
+| Using a tool | A tool without a reaction of its own | Two gears turning in opposite directions. |
+| Background timer | `schedule` call | A low body, a slow float and a stopwatch with a spinning hand. |
+| Waiting for the next action | A call returned and the session awaits the next step | A lower body, a slow float and an hourglass that flips. |
+| Turn ended | `Stop` with an abnormal ending (`MAX_INVOCATIONS`, `MAX_FORCED_INVOCATIONS`, `TERMINAL_STEP_TYPE`, `TERMINAL_CUSTOM_HOOK` or no reason) | Closed eyes, a resting body and a rising "z". It does not confirm that the task succeeded. |
+| Done | `Stop` with `NO_TOOL_CALL` and finished subagent rows | Three hops, happy eyes (^ ^) and blinking sparks. |
+| Interrupted | `Stop` with `USER_CANCELED` and a subagent stopped from the panel or the app | Shakes with anger, frowning brows, squinting eyes, a dripping drop and a sigh. |
+| Tool error | `PostToolUse` with a filled `error` (about 4 s) or `Stop` with `ERROR` | Shakes three times and settles, with uneven eyes and a blinking warning triangle. |
 
-O movimento de base combina flutuação em ciclos de 4 segundos, oito quadros de variação de cores em 8 segundos e piscadas em ciclos de 6,5 segundos. Na troca de estado o SVG continua o mesmo: pose, olhar e acessório mudam com uma transição curta, sem o mascote sumir e reaparecer. A sombra acompanha a flutuação. Esses movimentos não representam percentual de cota nem comprovam, por si só, uma tarefa em execução.
+The base movement combines a float in 4-second cycles, eight color-variation frames in 8 seconds and blinks in 6.5-second cycles. When the state changes, the SVG stays the same: pose, gaze and accessory change with a short transition, without the mascot disappearing and reappearing. The shadow follows the float. These movements do not represent a quota percentage nor do they prove, on their own, that a task is running.
 
-Tecnicamente, o Sparky é um sprite PNG de 32×32 ampliado com `image-rendering: pixelated`. As oito variações de cor são geradas no canvas a partir do mesmo sprite; olhos, óculos e acessórios são SVG sobrepostos. O movimento vem de keyframes CSS, não de quadros animados.
+Technically, Sparky is a 32×32 PNG sprite enlarged with `image-rendering: pixelated`. The eight color variations are generated on a canvas from the same sprite; eyes, glasses and accessories are overlaid SVG. The movement comes from CSS keyframes, not animated frames.
 
-Não há botão de pausa. Com a preferência de sistema **movimento reduzido**, todas as animações e transições do Sparky param. Os estados dependem dos eventos e metadados que o Antigravity disponibiliza.
+There is no pause button. With the system's **reduce motion** preference, all Sparky animations and transitions stop. States depend on the events and metadata Antigravity provides.
 
-## Começar a usar
+## Getting started
 
-Você precisa do Antigravity App no Windows e de Node.js 22 ou superior no `PATH`. O teste local usou Node.js 22.21.1. O runtime usa módulos nativos do Node e o SDK fornecido pelo Antigravity, sem `npm install` ou chave de API de IA adicional.
+You need the Antigravity App on Windows and Node.js 22 or later on the `PATH`. The local test used Node.js 22.21.1. The runtime uses native Node modules and the SDK provided by Antigravity, with no `npm install` or extra AI API key.
 
-Clone o projeto ou baixe o pacote da [release](https://github.com/ba-lison/agy-usage-hud/releases/latest):
+Clone the project or download the package from the [latest release](https://github.com/ba-lison/agy-usage-hud/releases/latest):
 
 ```powershell
 git clone https://github.com/ba-lison/agy-usage-hud.git
@@ -133,15 +134,15 @@ cd agy-usage-hud
 .\sync.bat
 ```
 
-O script copia o plugin para `%USERPROFILE%\.gemini\config\plugins\usage-hud`. Se já houver uma instalação, preserve uma cópia antes de executar: o script sobrescreve os arquivos de destino.
+The script copies the plugin to `%USERPROFILE%\.gemini\config\plugins\usage-hud`. If an installation already exists, keep a copy before running it: the script overwrites the destination files.
 
-No Antigravity, confira o plugin em **Customizations > Installed** e abra o painel **AGY - UsageHUD**. Se o sidecar não aparecer, consulte a configuração de ativação na [documentação oficial de sidecars](https://antigravity.google/docs/sidecars); não substitua seu arquivo de configuração inteiro.
+In Antigravity, check the plugin under **Customizations > Installed** and open the **AGY - UsageHUD** panel. If the sidecar does not appear, see the activation settings in the [official sidecar documentation](https://antigravity.google/docs/sidecars); do not replace your entire configuration file.
 
-O painel não abre sozinho ao iniciar o app: o `sidecar.json` não tem campo de auto-open e o Antigravity abre o Overview nativo por padrão. Para abrir em um clique a partir de um chat ou artefato, use [Abrir o UsageHUD](sidecar://usage-hud/usage_hud/ui.html); o link exige o plugin habilitado e o sidecar rodando. A aba também aparece na linha **Extensions** do Overview.
+The panel does not open by itself when the app starts: `sidecar.json` has no auto-open field and Antigravity opens the native Overview by default. To open it with one click from a chat or artifact, use [Open UsageHUD](sidecar://usage-hud/usage_hud/ui.html); the link requires the plugin enabled and the sidecar running. The tab also appears in the **Extensions** row of the Overview.
 
-Depois de atualizar apenas a interface, feche e reabra a aba do HUD. Se o aplicativo mantiver a página antiga, reinicie o Antigravity quando ele estiver ocioso. O painel consulta os dados sozinho a cada 5 segundos; não há botão de recarregar. O [guia de atualização](docs/INTEGRACAO.md) explica os limites desse procedimento.
+After updating only the interface, close and reopen the HUD tab. If the app keeps the old page, restart Antigravity while it is idle. The panel fetches data on its own every 5 seconds; there is no reload button. The [update guide](docs/INTEGRACAO.md) (in Portuguese) explains the limits of that procedure.
 
-### Desenvolver e verificar
+### Develop and verify
 
 ```powershell
 node test/metrics.test.mjs
@@ -149,35 +150,36 @@ node test/integration.test.mjs
 node test/ui.test.cjs
 ```
 
-A suíte de integração usa apenas Node.js. A suíte visual precisa de Playwright, Chrome e de uma instalação do Antigravity com seu `sidecar_sdk/preload.js`. Ela aceita o caminho de um pacote Playwright já instalado como primeiro argumento e o caminho do preload como segundo; veja o cabeçalho do teste.
+The integration suite uses only Node.js. The visual suite needs Playwright, Chrome and an Antigravity installation with its `sidecar_sdk/preload.js`. It accepts the path of an already installed Playwright package as the first argument and the preload path as the second; see the test header.
 
-Os testes ficam no repositório fonte; o ZIP da release contém apenas o plugin e sua documentação.
+Tests live in the source repository; the release ZIP contains only the plugin and its documentation.
 
-O histórico de desenvolvimento está preservado desde 30/10/2026. A interface executada pelo plugin é `sidecars/usage_hud/ui.html`; a prévia do painel fica em `preview/` e os sprites do Sparky em `sparky/`.
+The development history is preserved since 2026-10-30. The interface the plugin runs is `sidecars/usage_hud/ui.html`; the panel preview is in `preview/` and the Sparky sprites in `sparky/`.
 
-## Documentação e ajuda
+## Documentation and help
 
-| Assunto | Referência |
+| Subject | Reference |
 | --- | --- |
-| Instalação, atualização, integração e limites | [docs/INTEGRACAO.md](docs/INTEGRACAO.md) |
-| Manifesto do plugin | [plugin.json](plugin.json) |
-| Eventos e hooks | [hooks.json](hooks.json) |
-| Configuração do sidecar | [sidecar.json](sidecars/usage_hud/sidecar.json) |
-| Prévia interativa com dados de demonstração | [Arquivos da demonstração](https://github.com/ba-lison/agy-usage-hud/tree/main/preview) — abra o index.html localmente |
-| Galeria das 19 reações do Sparky | [sparky/sparky.html](sparky/sparky.html) |
-| Bugs e sugestões | [Issues](https://github.com/ba-lison/agy-usage-hud/issues) |
+| Installation, updates, integration and limits (PT-BR) | [docs/INTEGRACAO.md](docs/INTEGRACAO.md) |
+| Plugin manifest | [plugin.json](plugin.json) |
+| Events and hooks | [hooks.json](hooks.json) |
+| Sidecar configuration | [sidecar.json](sidecars/usage_hud/sidecar.json) |
+| Interactive preview with demo data | [Demo files](https://github.com/ba-lison/agy-usage-hud/tree/main/preview) — open index.html locally |
+| Gallery of the 19 Sparky reactions | [sparky/sparky.html](sparky/sparky.html) |
+| Bugs and suggestions | [Issues](https://github.com/ba-lison/agy-usage-hud/issues) |
+| Portuguese version of this README | [README.pt-BR.md](README.pt-BR.md) |
 
-Contribuições por issue ou pull request são bem-vindas. Ao relatar um problema, informe a versão do Antigravity, a versão do Node, o sistema e os passos para reproduzir. Remova dados pessoais e credenciais das capturas e dos logs compartilhados.
+Contributions through issues or pull requests are welcome. When reporting a problem, include the Antigravity version, the Node version, the system and the steps to reproduce. Remove personal data and credentials from shared screenshots and logs.
 
-### Créditos e materiais de terceiros
+### Credits and third-party materials
 
-Google Sans Flex mantém sua licença OFL. O símbolo Gemini e os nomes de produtos mantêm os direitos de seus titulares; não são relicenciados sob MIT. Este projeto não tem afiliação, patrocínio ou endosso do Google. Os detalhes e avisos estão em [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Google Sans Flex keeps its OFL license. The Gemini symbol and product names keep their owners' rights; they are not relicensed under MIT. This project has no affiliation, sponsorship or endorsement from Google. Details and notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-## Autoria e licença
+## Author and license
 
-Desenvolvido por [Alison Cruz](https://github.com/ba-lison) · **BALISON**.
+Built by [Alison Cruz](https://github.com/ba-lison) · **BALISON**.
 
-Distribuído sob a [licença MIT](LICENSE).
+Distributed under the [MIT license](LICENSE).
 
 ---
 
@@ -187,5 +189,5 @@ Distribuído sob a [licença MIT](LICENSE).
     <img src="assets/assinatura-alison-balison.svg" alt="Alison · BALISON" width="280">
   </picture>
   <br>
-  <sub>Tecnologia com traço humano.</sub>
+  <sub>Technology with a human touch.</sub>
 </p>

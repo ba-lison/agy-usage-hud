@@ -174,7 +174,7 @@ O painel envia `POST /api/subagents/stop` com a conversa pai e o id do filho. O 
 - O SDK continua responsável pela ponte com o host. O listener duplicado de tema foi removido do HUD. O seletor claro/escuro e a pausa de animações continuam disponíveis.
 - Os valores acessíveis dos indicadores de consumo e contexto acompanham os valores exibidos. Retorno de chamada de subagente não é apresentado como prova de sucesso.
 - Teste de regressão: test/ui.test.cjs usa o preload real instalado, injeta cores do host e simula telemetria, sem acessar conversas reais. Confere avatar/tarefa, contraste mínimo de 4,5:1, ausência de sobreposição e rolagem horizontal, 0/1/6 subagentes, recolher/expandir, ausência de controles de parada/cópia e movimento reduzido. São cinco larguras (320, 390, 472, 680 e 1024 px), nos dois temas. A suíte de integração existente também passou.
-- Prévia fiel com dados de demonstração: propostas/correcao-runtime-2026-11-01/index.html. Capturas e verificacao.json ficam na mesma pasta.
+- Prévia fiel com dados de demonstração: propostas/nativo-2026-11-15/index.html. Capturas ficam na mesma pasta.
 - Limites: browser headless com o preload real; a janela aberta do Antigravity não foi controlada. A precisão das cotas e dos estados vindos do servidor não foi validada com uma sessão real nesta correção. O cancelamento direto de subagentes permanece não suportado.
 - Instalação: atualizar somente sidecars/usage_hud/ui.html na cópia local do plugin, preservando o original e comparando o hash. O servidor lê esse arquivo a cada requisição; recriar a página do HUD carrega a correção. O procedimento e o limite do teste na janela real estão na seção Como carregar a atualização no Antigravity.
 

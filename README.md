@@ -122,7 +122,7 @@ A suíte de integração usa apenas Node.js. A suíte visual precisa de Playwrig
 
 Os testes ficam no repositório fonte; o ZIP da release contém apenas o plugin e sua documentação.
 
-O histórico de desenvolvimento está preservado desde 30/10/2026. As propostas antigas ficam em `propostas/`; a interface executada pelo plugin é `sidecars/usage_hud/ui.html`.
+O histórico de desenvolvimento está preservado desde 30/10/2026. A proposta atual fica em `propostas/nativo-2026-11-15/`; a interface executada pelo plugin é `sidecars/usage_hud/ui.html`.
 
 ## Documentação e ajuda
 
@@ -132,7 +132,7 @@ O histórico de desenvolvimento está preservado desde 30/10/2026. As propostas 
 | Manifesto do plugin | [plugin.json](plugin.json) |
 | Eventos e hooks | [hooks.json](hooks.json) |
 | Configuração do sidecar | [sidecar.json](sidecars/usage_hud/sidecar.json) |
-| Prévia interativa com dados de demonstração | [Arquivos da demonstração](https://github.com/ba-lison/agy-usage-hud/tree/main/propostas/correcao-runtime-2026-11-01) — abra o index.html localmente |
+| Prévia interativa com dados de demonstração | [Arquivos da demonstração](https://github.com/ba-lison/agy-usage-hud/tree/main/propostas/nativo-2026-11-15) — abra o index.html localmente |
 | Bugs e sugestões | [Issues](https://github.com/ba-lison/agy-usage-hud/issues) |
 
 Contribuições por issue ou pull request são bem-vindas. Ao relatar um problema, informe a versão do Antigravity, a versão do Node, o sistema e os passos para reproduzir. Remova dados pessoais e credenciais das capturas e dos logs compartilhados.

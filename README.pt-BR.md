@@ -30,7 +30,7 @@ O painel lê o `contextWindowUsage` do Language Server do próprio app e mostra 
 
 O plugin reúne manifesto, hooks, uma skill de handoff e um sidecar. O Antigravity gerencia o processo do sidecar; ele executa um servidor HTTP em loopback e fornece a página do painel. É uma integração local com o aplicativo, sem publicação no marketplace oficial.
 
-Interface em português do Brasil. A versão 1.3.3 foi validada localmente no Windows em 14/11/2026, com o painel abrindo zerado ao reiniciar o app. A integração pode precisar de ajustes quando o Antigravity mudar seus formatos ou interfaces.
+Interface em português do Brasil. A versão 1.4.0 foi validada localmente no Windows em 16/11/2026, com a cota lida do Language Server e o painel abrindo zerado ao reiniciar o app. A integração pode precisar de ajustes quando o Antigravity mudar seus formatos ou interfaces.
 
 ## Demonstração e recursos
 
@@ -44,14 +44,14 @@ Captura da interface com dados fictícios, no tema Legacy Dark. Não representa 
 - Ferramentas MCP configuradas, agrupadas por servidor, com o tamanho do schema.
 - Acompanhamento dos subagentes com o nome da aba Overview, tarefa, atividade e o contexto de cada um.
 - Parar um subagente em execução pelo painel, com confirmação em dois cliques, como o botão "Stop Subagent" da aba Overview.
-- Cota do modelo com percentual só quando o host informa; caso contrário, só o horário de renovação.
+- Cota do modelo com as janelas de **5 horas** e **semanal**; o cartão mostra a janela principal do modelo ativo (5h para Gemini/Argon, semanal para Claude/GPT), com as demais no detalhe recolhível.
 - Cores, borda e raio do tema ativo do Antigravity: o painel muda de tema junto com o app, sem seletor próprio.
 - Atualização automática a cada 5 segundos, sem botão de recarregar.
 - Painel zerado ao reiniciar o app: a conversa de ontem não aparece antes da primeira mensagem desta execução.
 
 O HUD roda no **Antigravity App** no Windows. Sidecars existem só no aplicativo, então o painel não funciona no IDE nem no CLI; essas superfícies têm outras fontes de dado e não são cobertas por esta versão.
 
-A disponibilidade dos dados depende do Antigravity. O título e a árvore de subagentes vêm do `conversation_summaries.db` do app; o nome de cada subagente é o `Role` do `invoke_subagent`; o contexto vem do `transcript.jsonl` da conversa. O total do contexto, o limite efetivo e os grupos de tokens vêm do `contextWindowUsage` do Language Server. No teste de 2026-11-14, o Gemini 4 Hydrogen apareceu com **256k de limite efetivo** e 141,1k usados (55%), não 1M. Sem resposta do Language Server, o painel mostra só os tokens e não inventa limite. A cota usa a informação do host quando acessível e nunca cai para a cota de outro modelo. A parada usa o RPC `CancelCascadeInvocation` do Language Server, o mesmo caminho da aba Overview. Não substitui a informação oficial de uso da conta.
+A disponibilidade dos dados depende do Antigravity. O título e a árvore de subagentes vêm do `conversation_summaries.db` do app; o nome de cada subagente é o `Role` do `invoke_subagent`; o contexto vem do `transcript.jsonl` da conversa. O total do contexto, o limite efetivo e os grupos de tokens vêm do `contextWindowUsage` do Language Server. No teste de 2026-11-14, o Gemini 4 Hydrogen apareceu com **256k de limite efetivo** e 141,1k usados (55%), não 1M. Sem resposta do Language Server, o painel mostra só os tokens e não inventa limite. A cota vem do `RetrieveUserQuotaSummary` do Language Server, que expõe as janelas de 5 horas e semanal por grupo; o painel mostra o grupo do modelo ativo e nunca cai para a cota de outro modelo. A parada usa o RPC `CancelCascadeInvocation` do Language Server, o mesmo caminho da aba Overview. Não substitui a informação oficial de uso da conta.
 
 ### Detalhes do contexto
 

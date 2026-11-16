@@ -2,6 +2,14 @@
 
 Documento técnico de referência sobre a integração do painel com os eventos reais do Antigravity e o histórico de cada versão.
 
+## 1.4.0 — cota de 5 horas e semanal — 2026-11-16
+
+- **Fonte:** o Language Server expõe `RetrieveUserQuotaSummary`, com grupos (`Gemini Models`, `Claude and GPT models` e a cota própria do `Gemini 4 Argon`) e, em cada grupo, as janelas `5h` e `weekly`. O painel deixou de depender só do `quotaInfo` de `clientModelConfigs`, que mostrava uma janela só e podia variar conforme o modelo.
+- **Regra:** o cartão **Uso do modelo** mostra a janela principal do modelo ativo. Gemini/Argon usa a **5h**; Claude/GPT usa a **semanal** quando a 5h está desativada. A outra janela e a cota própria do Argon ficam no detalhe recolhível pelo mesmo chevron do cartão Contexto.
+- **Interface:** anel e contagem continuam os mesmos. Para a janela semanal, a contagem mostra dias e horas, sem segundos. O rodapé mostra `X% disponível` e `0% disponível · esgotada` quando a janela zera. O detalhe usa a lista do Contexto, com `Não se aplica` para janela desativada.
+- **Fallback:** sem `RetrieveUserQuotaSummary`, o painel mantém a leitura antiga de `clientModelConfigs`; nunca usa a cota de outro modelo.
+- **Verificação:** testes de métricas e integração passando. O fluxo real foi conferido contra o Language Server do Antigravity em 2026-11-16: Orchestrator (Argon) mostrou 5h em 93%, semana em 82% e cota própria do Argon em 81%; Claude Opus 5.5 mostrou semana em 0% e 5h como `Não se aplica`.
+
 ## 1.3.5 — hook não bloqueia mais as ferramentas — 2026-11-14
 
 - **Sintoma:** com o plugin ativo, toda ferramenta (`read_file`, `run_command`, inclusive na raiz do workspace) era recusada com `tool call denied by pre-tool hook:` e motivo vazio.

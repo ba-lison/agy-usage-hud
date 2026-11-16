@@ -30,7 +30,7 @@ The panel reads `contextWindowUsage` from the app's own Language Server and show
 
 The plugin bundles a manifest, hooks, a handoff skill and a sidecar. Antigravity manages the sidecar process; it runs an HTTP server on loopback and serves the panel page. It is a local integration with the app, with no publication in the official marketplace.
 
-The interface is in Brazilian Portuguese; this README is the English version. Version 1.3.3 was validated locally on Windows on 2026-11-14, with the panel opening empty after an app restart. The integration may need adjustments when Antigravity changes its formats or interfaces.
+The interface is in Brazilian Portuguese; this README is the English version. Version 1.4.0 was validated locally on Windows on 2026-11-16, with the quota read from the Language Server and the panel opening empty after an app restart. The integration may need adjustments when Antigravity changes its formats or interfaces.
 
 ## Demo and features
 
@@ -44,14 +44,14 @@ Screenshot of the interface with fictional data, in the Legacy Dark theme. It do
 - Configured MCP tools, grouped by server, with each schema size.
 - Subagent tracking with the Overview tab name, task, activity and each one's context.
 - Stop a running subagent from the panel, with two-click confirmation, like the "Stop Subagent" button in the Overview tab.
-- Model quota with a percentage only when the host provides one; otherwise, only the renewal time.
+- Model quota with the **5-hour** and **weekly** windows; the card shows the active model's main window (5h for Gemini/Argon, weekly for Claude/GPT), with the other windows in a collapsible detail.
 - Colors, border and radius from the active Antigravity theme: the panel switches themes with the app and has no selector of its own.
 - Automatic refresh every 5 seconds, with no reload button.
 - Empty panel after restarting the app: yesterday's conversation does not appear before the first message of this run.
 
 The HUD runs in the **Antigravity App** on Windows. Sidecars only exist in the app, so the panel does not work in the IDE or the CLI; those surfaces have other data sources and are not covered by this version.
 
-Data availability depends on Antigravity. The title and the subagent tree come from the app's `conversation_summaries.db`; each subagent name is the `Role` of the `invoke_subagent` call; the context comes from the conversation's `transcript.jsonl`. The context total, the effective limit and the token groups come from the Language Server's `contextWindowUsage`. In the 2026-11-14 test, Gemini 4 Hydrogen showed **an effective limit of 256k** with 141.1k used (55%), not 1M. Without a Language Server response, the panel shows only the tokens and invents no limit. The quota uses the host information when available and never falls back to another model's quota. Stop uses the Language Server's `CancelCascadeInvocation` RPC, the same path as the Overview tab. It does not replace the official account usage information.
+Data availability depends on Antigravity. The title and the subagent tree come from the app's `conversation_summaries.db`; each subagent name is the `Role` of the `invoke_subagent` call; the context comes from the conversation's `transcript.jsonl`. The context total, the effective limit and the token groups come from the Language Server's `contextWindowUsage`. In the 2026-11-14 test, Gemini 4 Hydrogen showed **an effective limit of 256k** with 141.1k used (55%), not 1M. Without a Language Server response, the panel shows only the tokens and invents no limit. The quota comes from the Language Server's `RetrieveUserQuotaSummary`, which exposes the 5-hour and weekly windows per group; the panel shows the active model's group and never falls back to another model's quota. Stop uses the Language Server's `CancelCascadeInvocation` RPC, the same path as the Overview tab. It does not replace the official account usage information.
 
 ### Context details
 

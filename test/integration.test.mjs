@@ -33,25 +33,31 @@ function runHook(eventName, inputJson, env = {}) {
 }
 
 // 1. Testes de parser de hooks e respostas de stdout
-console.log('1. Validando parser de hooks e respostas neutras de stdout...')
-for (const ev of ['SessionStart', 'PreToolUse', 'PostToolUse', 'PreInvocation', 'PostInvocation', 'Stop']) {
+console.log('1. Validando parser de hooks e respostas de stdout...')
+const neutral = ['SessionStart', 'PostToolUse', 'PreInvocation', 'PostInvocation']
+for (const ev of neutral) {
   const res = await runHook(ev, { conversationId: 'test-session-1' })
   assert.equal(res.code, 0, `Hook ${ev} deve sair com código 0`)
   assert.equal(res.stdout, '{}', `Hook ${ev} deve retornar {} neutro no stdout`)
 }
+for (const [ev, expected] of [['PreToolUse', '{"decision":"allow"}'], ['Stop', '{"decision":"stop"}']]) {
+  const res = await runHook(ev, { conversationId: 'test-session-1' })
+  assert.equal(res.code, 0, `Hook ${ev} deve sair com código 0`)
+  assert.equal(res.stdout, expected, `Hook ${ev} deve devolver a decisão esperada`)
+}
 
-// Test invalid JSON input
+// Test invalid JSON input: o contrato do PreToolUse continua válido.
 {
   const res = await runHook('PreToolUse', 'INVALID_JSON_CONTENT{{{{')
   assert.equal(res.code, 0, 'Hook com JSON inválido deve sair com 0')
-  assert.equal(res.stdout, '{}', 'Hook com JSON inválido deve retornar {} no stdout')
+  assert.equal(res.stdout, '{"decision":"allow"}', 'Hook com JSON inválido deve devolver allow')
 }
 
 // Test missing fields and null input
 {
   const res = await runHook('Stop', null)
   assert.equal(res.code, 0, 'Hook com stdin vazio deve sair com 0')
-  assert.equal(res.stdout, '{}', 'Hook com stdin vazio deve retornar {}')
+  assert.equal(res.stdout, '{"decision":"stop"}', 'Hook com stdin vazio deve devolver stop')
 }
 console.log('   ✓ Parser e saídas de stdout validados para todos os eventos e falhas de input.')
 
@@ -380,9 +386,27 @@ console.log('\n8. Validando descoberta do Language Server (porta nova morta, ant
   const convId = 'conv-ls-discovery'
   const logs = path.join(home, '.gemini', 'antigravity', 'brain', convId, '.system_generated', 'logs')
   fs.mkdirSync(logs, { recursive: true })
-  fs.writeFileSync(path.join(logs, 'transcript.jsonl'), JSON.stringify({ type: 'PLANNER_RESPONSE', input_tokens: 1000, cache_read_tokens: 500, output_tokens: 20 }) + '\n')
+  fs.writeFileSync(
+    path.join(logs, 'transcript.jsonl'),
+    [
+      JSON.stringify({ type: 'USER_INPUT', content: 'Model Selection` from None to Gemini 4 Hydrogen (Medium). No need to comment' }),
+      JSON.stringify({ type: 'PLANNER_RESPONSE', input_tokens: 1000, cache_read_tokens: 500, output_tokens: 20 }),
+    ].join('\n') + '\n',
+  )
 
   const usage = { estimatedTokensUsed: 1500, maxContextTokens: 256000, tokenGroups: [{ name: 'Mensagens', numTokens: 900 }] }
+  const quota = {
+    groups: [
+      {
+        displayName: 'Gemini Models',
+        description: 'Models within this group: Gemini 4 Hydrogen, Gemini 3.8 Flash',
+        buckets: [
+          { window: 'weekly', remainingFraction: 0.82, resetTime: new Date(Date.now() + 4 * 86_400_000).toISOString() },
+          { window: '5h', remainingFraction: 0.92, resetTime: new Date(Date.now() + 3 * 3_600_000).toISOString() },
+        ],
+      },
+    ],
+  }
   const fakeLs = http.createServer((req, res) => {
     if (req.method === 'GET' && req.url === '/') {
       res.writeHead(200, { 'Content-Type': 'text/html' })
@@ -397,6 +421,14 @@ console.log('\n8. Validando descoberta do Language Server (porta nova morta, ant
         const header = Buffer.from([0, (payload.length >>> 24) & 255, (payload.length >>> 16) & 255, (payload.length >>> 8) & 255, payload.length & 255])
         res.writeHead(200, { 'Content-Type': 'application/connect+json' })
         res.end(Buffer.concat([header, payload]))
+      })
+      return
+    }
+    if (req.method === 'POST' && req.url.includes('RetrieveUserQuotaSummary')) {
+      req.resume()
+      req.on('end', () => {
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ response: quota }))
       })
       return
     }
@@ -443,6 +475,9 @@ console.log('\n8. Validando descoberta do Language Server (porta nova morta, ant
     assert.equal(data.context.window, 256000, 'limite efetivo vem do Language Server')
     assert.equal(data.context.tokens, 1500, 'tokens do Language Server')
     assert.equal(data.context.pct, 1, 'percentual calculado sobre o limite real')
+    assert.equal(data.quota.window, '5 horas', 'a janela principal do Gemini é a de 5 horas')
+    assert.equal(data.quota.remainingPct, 92, 'percentual vem do RetrieveUserQuotaSummary')
+    assert.deepEqual(data.quota.detail.map(row => row.name), ['Semana'], 'a semanal fica no detalhe')
   } finally {
     sidecar.kill()
     fakeLs.close()

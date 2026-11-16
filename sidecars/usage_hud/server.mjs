@@ -16,6 +16,7 @@ import {
   promptTitle,
   quotaFor,
   quotaReading,
+  quotaSummaryReading,
   readTail,
   splitModel,
   summaryFor,
@@ -131,6 +132,48 @@ async function modelConfigs() {
     forgetLanguageServer()
   }
   return configsCache.models
+}
+
+// RetrieveUserQuotaSummary traz os grupos reais do View Usage: Gemini Models,
+// Claude and GPT models e a cota própria do Gemini 4 Argon. Cada grupo tem a
+// janela de 5 horas e a semanal. O painel usa o grupo do modelo ativo; sem
+// essa resposta, mantém a cota antiga de clientModelConfigs.
+const quotaCache = { at: 0, summary: null }
+const quotaInFlight = { promise: null }
+
+async function quotaSummary() {
+  const now = Date.now()
+  if (now - quotaCache.at < 15_000) return quotaCache.summary
+  if (quotaInFlight.promise) return quotaInFlight.promise
+  quotaInFlight.promise = (async () => {
+    const base = await resolveLanguageServerBase()
+    if (!base) return quotaCache.summary
+    try {
+      const csrf = await languageServerCsrf(base)
+      const body = Buffer.from(JSON.stringify({}), 'utf8')
+      const res = await postRaw(
+        base,
+        '/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary',
+        body,
+        'application/json',
+        csrf,
+      )
+      if (res.status === 200) {
+        const summary = JSON.parse(res.body)?.response ?? null
+        if (summary && Array.isArray(summary.groups)) {
+          quotaCache.summary = summary
+          quotaCache.at = now
+        }
+      }
+    } catch {
+      // Porta ou CSRF mudaram: a próxima consulta resolve de novo.
+      forgetLanguageServer()
+    }
+    return quotaCache.summary
+  })().finally(() => {
+    quotaInFlight.promise = null
+  })
+  return quotaInFlight.promise
 }
 
 /* ---------------- contexto detalhado ---------------- */
@@ -424,8 +467,8 @@ async function computeMetrics(targetConvId) {
   const window = live ? live.window : null
   const pct = contextPct(tokens, window)
   const summary = summaryFor(id)
-  const models = await modelConfigs()
-  const quota = quotaReading(quotaFor(models, raw))
+  const [models, quotaSummaryData] = await Promise.all([modelConfigs(), quotaSummary()])
+  const quota = quotaSummaryReading(quotaSummaryData, raw) ?? quotaReading(quotaFor(models, raw))
   const model = splitModel(raw)
 
   return {

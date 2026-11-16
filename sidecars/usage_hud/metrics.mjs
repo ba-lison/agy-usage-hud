@@ -456,6 +456,162 @@ export function timeLeft(ms) {
   return hours > 0 ? `${hours}h ${String(minutes % 60).padStart(2, '0')}m` : `${minutes}min`
 }
 
+// Rótulo curto para o detalhe: "3h30", "4d14h", "6d". O rodapé e a lista
+// usam a mesma leitura para não misturar formatos.
+export function compactTimeLeft(ms) {
+  if (!Number.isFinite(ms)) return null
+  const minutes = Math.max(0, Math.round(ms / 60_000))
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+  if (days > 0) return `${days}d${hours % 24 ? `${hours % 24}h` : ''}`
+  if (hours > 0) return `${hours}h${minutes % 60 ? String(minutes % 60).padStart(2, '0') : ''}`
+  return `${minutes}min`
+}
+
+function quotaWindowReading(bucket, now = Date.now()) {
+  const fraction = typeof bucket?.remainingFraction === 'number' ? bucket.remainingFraction : null
+  const reset = bucket?.resetTime ? new Date(bucket.resetTime) : null
+  const validReset = reset && !Number.isNaN(reset.getTime()) ? reset : null
+  const timeLeftMs = validReset ? Math.max(0, validReset.getTime() - now) : null
+  return {
+    exposed: fraction !== null,
+    remainingPct: fraction === null ? null : Math.round(fraction * 100),
+    consumedPct: fraction === null ? null : Math.round((1 - fraction) * 100),
+    resetsAt: validReset ? validReset.toISOString() : null,
+    resetLabel: timeLeftMs === null ? null : timeLeftMs <= 0 ? 'agora' : `em ${compactTimeLeft(timeLeftMs)}`,
+    timeLeftMs,
+    timeLeft: timeLeftMs === null ? null : timeLeft(timeLeftMs),
+    days: timeLeftMs === null ? null : Math.floor(timeLeftMs / 86_400_000),
+    hours: timeLeftMs === null ? null : Math.floor((timeLeftMs % 86_400_000) / 3_600_000),
+  }
+}
+
+function quotaWindowName(bucket) {
+  if (bucket?.window === '5h') return '5 horas'
+  if (bucket?.window === 'weekly') return 'semana'
+  return bucket?.window || bucket?.displayName || 'janela'
+}
+
+function quotaModelMatches(displayName, model) {
+  const name = String(displayName || '').toLowerCase()
+  if (!name || /gemini models|claude and gpt/.test(name)) return false
+  const tokens = name
+    .split(/[^a-z0-9.]+/)
+    .filter(token => token.length >= 4 && !['gemini', 'models', 'weekly', 'limit', 'remaining'].includes(token))
+  return tokens.some(token => model.includes(token))
+}
+
+function quotaGroupModels(group) {
+  const text = String(group?.description || '')
+  const listed = /models within this group:\s*(.+)$/i.exec(text)?.[1]
+  return listed
+    ? listed.split(',').map(name => name.trim().toLowerCase()).filter(Boolean)
+    : []
+}
+
+function quotaModelInGroup(model, group) {
+  const names = quotaGroupModels(group)
+  if (names.length === 0) return false
+  return names.some(name => model === name || model.startsWith(`${name} `) || model.startsWith(`${name}(`))
+}
+
+function quotaFamilyGroup(groups, model) {
+  if (/claude|gpt/.test(model)) {
+    const group = groups.find(item => /claude.*gpt/.test(String(item.displayName || '').toLowerCase())) ?? null
+    return group && quotaModelInGroup(model, group) ? group : null
+  }
+  if (/gemini|argon|orchestrator/.test(model)) {
+    const group = groups.find(item => /gemini models/.test(String(item.displayName || '').toLowerCase())) ?? null
+    if (!group) return null
+    return /argon|orchestrator/.test(model) || quotaModelInGroup(model, group) ? group : null
+  }
+  return null
+}
+
+function quotaDetailRow(bucket, name, now) {
+  if (bucket?.disabled === true) {
+    return { name, notApplicable: true, remainingPct: null, resetLabel: null }
+  }
+  const reading = quotaWindowReading(bucket, now)
+  return {
+    name,
+    remainingPct: reading.remainingPct,
+    resetLabel: reading.resetLabel,
+  }
+}
+
+// A cota real do host vem de RetrieveUserQuotaSummary. Cada grupo traz a janela
+// de 5 horas e a semanal; o painel usa a janela principal do modelo ativo e
+// deixa as demais no detalhe. Sem grupo correspondente, devolve null para o
+// chamador cair na cota antiga de clientModelConfigs.
+export function quotaSummaryReading(summary, rawModel, now = Date.now()) {
+  const groups = Array.isArray(summary?.groups) ? summary.groups.filter(group => Array.isArray(group?.buckets)) : []
+  if (!rawModel || groups.length === 0) return null
+  const model = String(rawModel).toLowerCase()
+  const family = quotaFamilyGroup(groups, model)
+  const ownGroups = groups.filter(group => group !== family && quotaModelMatches(group.displayName, model))
+  const familyBuckets = family?.buckets ?? []
+
+  const fiveHour = familyBuckets.find(bucket => bucket.window === '5h') ?? null
+  const weekly = familyBuckets.find(bucket => bucket.window === 'weekly') ?? null
+  let primaryBucket = fiveHour && fiveHour.disabled !== true ? fiveHour : weekly
+  let primaryGroup = family
+
+  if (!primaryBucket) {
+    for (const group of ownGroups) {
+      const bucket = group.buckets.find(item => item.window === 'weekly') ?? group.buckets[0]
+      if (bucket) {
+        primaryBucket = bucket
+        primaryGroup = group
+        break
+      }
+    }
+  }
+  if (!primaryBucket) return null
+
+  const primary = quotaWindowReading(primaryBucket, now)
+  const detail = []
+  if (primaryBucket === fiveHour) {
+    if (weekly) detail.push(quotaDetailRow(weekly, 'Semana', now))
+  } else if (fiveHour) {
+    detail.push(quotaDetailRow(fiveHour, '5 horas', now))
+  }
+
+  for (const group of ownGroups) {
+    for (const bucket of group.buckets) {
+      if (bucket === primaryBucket) continue
+      if (bucket === weekly) continue
+      detail.push(quotaDetailRow(bucket, `${group.displayName} · própria`, now))
+    }
+  }
+
+  const groupName = primaryGroup?.displayName ?? family?.displayName ?? null
+  let note = null
+  if (primaryBucket === fiveHour) {
+    note = 'A janela principal é a de 5 horas.'
+  } else if (fiveHour?.disabled === true) {
+    note = 'Cota semanal esgotada; a janela de 5 horas não se aplica.'
+  }
+
+  return {
+    exposed: primary.exposed,
+    modelLabel: rawModel,
+    group: groupName,
+    source: 'language-server',
+    window: quotaWindowName(primaryBucket),
+    remainingPct: primary.remainingPct,
+    consumedPct: primary.consumedPct,
+    resetsAt: primary.resetsAt,
+    resetLabel: primary.resetLabel,
+    timeLeftMs: primary.timeLeftMs,
+    timeLeft: primary.timeLeft,
+    days: primaryBucket.window === 'weekly' ? primary.days : null,
+    hours: primaryBucket.window === 'weekly' ? primary.hours : null,
+    detail,
+    note,
+  }
+}
+
 export function quotaReading(quota, now = Date.now()) {
   if (!quota) {
     return {
@@ -467,6 +623,9 @@ export function quotaReading(quota, now = Date.now()) {
       resetLabel: null,
       timeLeftMs: null,
       timeLeft: null,
+      window: null,
+      detail: [],
+      note: null,
     }
   }
   const reset = quota.resetTime ? new Date(quota.resetTime) : null
@@ -481,6 +640,9 @@ export function quotaReading(quota, now = Date.now()) {
     resetLabel: validReset ? formatReset(validReset, now) : null,
     timeLeftMs: validReset ? Math.max(0, validReset.getTime() - now) : null,
     timeLeft: validReset ? timeLeft(validReset.getTime() - now) : null,
+    window: null,
+    detail: [],
+    note: null,
   }
 }
 

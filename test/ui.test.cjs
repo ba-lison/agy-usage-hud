@@ -76,10 +76,52 @@ let activity = { kind: 'agents', label: 'Coordenando subagentes', detail: '1 de 
     await page.screenshot({ path: path.join(output, 'painel-472-dark.png'), fullPage: true });
     assert.equal(await page.locator('.agent-avatar .mascot').count(), 1, 'Task text must not replace the avatar');
     assert.equal(await page.locator('.agent-copy > span').textContent(), agent.task);
-    assert.equal(await page.locator('.agent-copy > strong').textContent(), agent.name);
+    assert.equal(await page.locator('.agent-copy > strong > b').textContent(), agent.name);
     assert.equal(await page.locator('#session-title').textContent(), stats.title);
     assert.equal(await page.locator('.usage-ring').getAttribute('aria-valuenow'), String(stats.quota.consumedPct));
     assert.equal(await page.locator('.context-track').getAttribute('aria-valuenow'), String(stats.context.pct));
+
+    // Cota nova: 5h como principal e semana recolhida no detalhe.
+    const quota5h = {
+      exposed: true,
+      window: '5 horas',
+      consumedPct: 8,
+      remainingPct: 92,
+      resetLabel: 'em 3h30',
+      timeLeftMs: 12_600_000,
+      detail: [{ name: 'Semana', remainingPct: 82, resetLabel: 'em 4d14h' }],
+      note: 'A janela principal é a de 5 horas.',
+    };
+    await page.evaluate(([base, q]) => renderTelemetry({ ...base, quota: q }), [stats, quota5h]);
+    assert.equal(await page.locator('#time-caption').textContent(), 'Tempo até renovar · 5 horas');
+    assert.equal(await page.locator('#quota-toggle').isVisible(), true);
+    assert.equal(await page.locator('#quota-detail').isVisible(), false);
+    await page.locator('#quota-toggle').click();
+    assert.equal(await page.locator('#quota-detail').isVisible(), true);
+    assert.equal(await page.locator('#quota-groups li').count(), 1);
+    assert.equal(await page.locator('#quota-groups li .context-name').textContent(), 'Semana');
+    assert.equal(await page.locator('#quota-groups li .context-pct').textContent(), '82%');
+    assert.equal(await page.locator('#quota-note').textContent(), quota5h.note);
+
+    // Semanal como principal: dias/horas sem segundos e 5h "Não se aplica".
+    const quotaWeekly = {
+      exposed: true,
+      window: 'semana',
+      consumedPct: 100,
+      remainingPct: 0,
+      resetLabel: 'em 3d15h',
+      days: 3,
+      hours: 15,
+      detail: [{ name: '5 horas', notApplicable: true }],
+      note: 'Cota semanal esgotada; a janela de 5 horas não se aplica.',
+    };
+    await page.evaluate(([base, q]) => renderTelemetry({ ...base, quota: q }), [stats, quotaWeekly]);
+    assert.equal(await page.locator('#time-h').textContent(), '03d');
+    assert.equal(await page.locator('#time-m').textContent(), '15h');
+    assert.equal(await page.locator('.usage-remaining').textContent(), '0% disponível · esgotada');
+    assert.equal(await page.locator('#quota-groups li .context-tokens').textContent(), 'Não se aplica');
+    await page.locator('#quota-toggle').click();
+    await page.evaluate(stub => renderTelemetry(stub), stats);
 
     // Sem remainingFraction o painel não pode inventar zero.
     await page.evaluate(stub => renderTelemetry({ ...stub, quota: { exposed: false, consumedPct: null, remainingPct: null, resetLabel: 'sex 08:44', timeLeftMs: 520303493 } }), stats);

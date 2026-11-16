@@ -422,11 +422,14 @@ p, h1, h2, dl, dd { margin: 0; }
       <section aria-labelledby="time-title" class="card metric-panel time-panel">
         <div class="card-head">
           <h2 id="time-title"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>Uso do modelo</h2>
+          <button type="button" class="icon-btn context-toggle" id="quota-toggle" aria-expanded="false" aria-controls="quota-detail" aria-label="Ver detalhes da cota" title="Ver detalhes da cota" hidden>
+            <svg class="icon chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+          </button>
         </div>
         <div class="metric-body">
           <div class="time-grid">
             <div>
-              <p class="metric-caption">Tempo até renovar</p>
+              <p class="metric-caption" id="time-caption">Tempo até renovar</p>
               <div aria-label="Tempo restante" class="time-value" id="time-display">
                 <span id="time-h">--<span class="time-unit">h</span></span>
                 <span id="time-m">--<span class="time-unit">m</span></span>
@@ -447,6 +450,11 @@ p, h1, h2, dl, dd { margin: 0; }
           <div class="card-foot">
             <span class="usage-remaining">o host não informa</span>
             <strong id="reset-time-label">Sem renovação exposta</strong>
+          </div>
+
+          <div id="quota-detail" class="context-detail" hidden>
+            <ul id="quota-groups" class="context-groups" aria-label="Outras janelas de cota do modelo"></ul>
+            <p id="quota-note" class="context-note"></p>
           </div>
         </div>
       </section>
@@ -780,6 +788,50 @@ p, h1, h2, dl, dd { margin: 0; }
       document.querySelector('#time-s').innerHTML = '--<span>s</span>';
     }
 
+    // Janela semanal: dias e horas nas mesmas casas da contagem, sem segundos.
+    function renderDaysLeft(days, hours) {
+      stopCountdown();
+      document.querySelector('#time-h').innerHTML = `${String(days).padStart(2, '0')}<span class="time-unit">d</span>`;
+      document.querySelector('#time-m').innerHTML = `${String(hours || 0).padStart(2, '0')}<span class="time-unit">h</span>`;
+      document.querySelector('#time-s').innerHTML = '';
+      document.querySelector('#time-display').setAttribute('aria-label', `Tempo restante: ${days} dias e ${hours || 0} horas`);
+    }
+
+    // Detalhe da cota: mesma lista do detalhe do Contexto (ponto, nome, renovação, %).
+    let quotaOpen = false;
+    function renderQuotaDetail(quota) {
+      const rows = Array.isArray(quota.detail) ? quota.detail : [];
+      const toggle = document.getElementById('quota-toggle');
+      const hasDetail = rows.length > 0 || Boolean(quota.note);
+      toggle.hidden = !hasDetail;
+      document.getElementById('quota-detail').hidden = !(hasDetail && quotaOpen);
+      document.getElementById('quota-groups').replaceChildren(...rows.map(row => {
+        const li = document.createElement('li');
+        const dot = document.createElement('span');
+        const hasPct = typeof row.remainingPct === 'number';
+        dot.className = row.notApplicable || !hasPct ? 'context-dot is-free' : 'context-dot';
+        if (!row.notApplicable && hasPct) {
+          const used = 100 - row.remainingPct;
+          dot.style.setProperty('--seg-color', used >= 95 ? 'var(--hud-error)' : used >= 80 ? 'var(--hud-warning)' : 'var(--hud-accent)');
+        }
+        const name = document.createElement('span');
+        name.className = 'context-name';
+        name.textContent = row.name || '';
+        const value = document.createElement('span');
+        value.className = 'context-tokens';
+        value.textContent = row.notApplicable ? 'Não se aplica' : row.resetLabel ? `renova ${row.resetLabel}` : '';
+        const pct = document.createElement('span');
+        pct.className = 'context-pct';
+        pct.textContent = row.notApplicable || !hasPct ? '—' : `${row.remainingPct}%`;
+        li.setAttribute('aria-label', row.notApplicable
+          ? `${row.name}: não se aplica, janela desativada`
+          : `${row.name}: ${hasPct ? `${row.remainingPct}% disponível` : 'percentual não exposto'}${row.resetLabel ? `, renova ${row.resetLabel}` : ''}`);
+        li.append(dot, name, value, pct);
+        return li;
+      }));
+      document.getElementById('quota-note').textContent = quota.note || '';
+    }
+
     // O anel usa o accent do tema; só esquenta perto do fim da cota.
     function renderUsage(rawValue) {
       if (typeof rawValue !== 'number' || !Number.isFinite(rawValue)) return;
@@ -799,7 +851,7 @@ p, h1, h2, dl, dd { margin: 0; }
       document.querySelector('#usage-value').textContent = String(val);
       document.querySelector('.usage-percent-symbol').hidden = false;
       document.querySelector('#usage-caption').textContent = 'consumido';
-      document.querySelector('.usage-remaining').textContent = `${available}% disponível`;
+      document.querySelector('.usage-remaining').textContent = available === 0 ? '0% disponível · esgotada' : `${available}% disponível`;
     }
 
     // Sem remainingFraction o host não informa percentual. Mostrar zero seria
@@ -1080,8 +1132,12 @@ p, h1, h2, dl, dd { margin: 0; }
 
       // Cota do modelo
       const quota = data.quota || {};
-      if (typeof quota.timeLeftMs === 'number') startCountdown(quota.timeLeftMs);
+      document.querySelector('#time-display').setAttribute('aria-label', 'Tempo restante');
+      document.getElementById('time-caption').textContent = quota.window ? `Tempo até renovar · ${quota.window}` : 'Tempo até renovar';
+      if (typeof quota.days === 'number') renderDaysLeft(quota.days, quota.hours);
+      else if (typeof quota.timeLeftMs === 'number') startCountdown(quota.timeLeftMs);
       else stopCountdown();
+      renderQuotaDetail(quota);
       document.getElementById('reset-time-label').textContent = quota.resetLabel
         ? `Renova ${quota.resetLabel}`
         : 'Sem renovação exposta';
@@ -1217,6 +1273,16 @@ p, h1, h2, dl, dd { margin: 0; }
         if (event.target.closest('.agent-stop')) askStop(agent);
         else if (event.target.closest('.agent-stop-confirm')) stopAgent(agent);
         else if (event.target.closest('.agent-stop-cancel')) cancelStop();
+      });
+
+      document.getElementById('quota-toggle').addEventListener('click', () => {
+        quotaOpen = !quotaOpen;
+        const toggle = document.getElementById('quota-toggle');
+        toggle.setAttribute('aria-expanded', String(quotaOpen));
+        document.getElementById('quota-detail').hidden = !quotaOpen;
+        const label = quotaOpen ? 'Ocultar detalhes da cota' : 'Ver detalhes da cota';
+        toggle.setAttribute('aria-label', label);
+        toggle.title = label;
       });
 
       document.getElementById('context-toggle').addEventListener('click', () => {
